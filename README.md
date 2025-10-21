@@ -1,281 +1,109 @@
-# Timeline (Week 4 → Week 10)
+# Farkle Web 🎲
+**The classic high-stakes dice game, rebuilt for the browser with a twist of Chaos.**
 
-## Week 4 — 3D Dice Prototype (read top faces)
-
-**Goal:** Six physics dice roll on a 3D table; after settling, the game reliably knows each top value.
-**Done when:**
-
-* 6 dice spawn on a table with walls; Roll button tumbles them.
-* Settle detection works (no jitter loops); top face read ≥95% accurate across 30 trials.
-* Auto re-roll any ambiguous die after 2s.
-  **Team split:**
-  Gameplay (roll/settle), Systems (face-reading logic & thresholds), UX (basic UI & camera rig), PM/QA (test matrix & acceptance list).
-
-## Week 5 — Scoring Engine Spec + Test Data
-
-**Goal:** Formalize all scoring rules and test cases; integrate with UI readouts.
-**Done when:**
-
-* Written spec of rules (1s/5s, 3-kind, 1–6 straight, three pairs), plus edge-case notes.
-* Table-driven **test dataset** (inputs/expected outputs) prepared (no code).
-* UI shows current roll values and “Farkle” flag based on can-score logic.
-
-## Week 6 — Full Turn Loop (Hot-Seat) + Keep/Bank
-
-**Goal:** Play a complete round: roll → keep scorers → bank/roll again → next player.
-**Done when:**
-
-* Dice can be marked kept/unkept (visual state).
-* Reroll only unkept dice.
-* Bank adds to player’s round/total; Farkle loses round points; target score ends game.
-* Two players can finish a game without soft locks.
-
-## Week 7 — UX Pass + Tutorial Overlay
-
-**Goal:** Self-explanatory flow for a first-time player.
-**Done when:**
-
-* Status banners for each state (Roll / Select / Bank or Roll Again / FARKLE).
-* 3–4 step tutorial overlay (dismissible).
-* Basic SFX hooked (roll, select, bank, farkle).
-
-## Week 8 — Modifier System (foundation) + 2 Modifiers
-
-**Goal:** Data-driven mutators that hook into roll/score.
-**Done when:**
-
-* Hooks defined: on_round_start, pre_roll(dice), post_roll(dice), pre_score(values)->values.
-* Presets selectable (Classic, Party).
-* Big Dice and Low Gravity change play clearly.
-
-## Week 9 — Reach 5+ Modifiers + Edge-Case QA
-
-**Goal:** Variety with stability.
-**Done when:**
-
-* Add: Missing Die, Double Ones, Same-Face Swarm (or similar).
-* QA plays 3 full games across presets; scoring remains correct; no crashes.
-
-## Week 10 — Ship
-
-**Goal:** Exportable, stable build with minimal save and docs.
-**Done when:**
-
-* Saves basic options/preset/last winner.
-* Performance sweep (CCD on dice, ang-vel caps, pooled arrays).
-* Exports (Win/macOS/Linux) + README (controls, rules, presets).
-  *(Week 11 optional: skins, confetti polish, simple AI.)*
+[![Status: In Development](https://img.shields.io/badge/Status-In%20Development-blue)](https://github.com/your-username/farkle-web)
+[![Target Release](https://img.shields.io/badge/Target%20Release-Dec%2013th%2C%202024-red)](https://github.com/your-username/farkle-web)
+[![Tech Stack](https://img.shields.io/badge/Tech-HTML%20%7C%20CSS%20%7C%20JS-orange)](https://github.com/your-username/farkle-web)
 
 ---
 
-# File & Folder Structure (no code)
+## Project Overview
 
-```
-/project_root
-  /addons/                    # empty for now; room for helpers if needed
-  /assets/
-    /audio/                   # roll.wav, select.wav, bank.wav, farkle.wav
-    /fonts/                   # UI font(s)
-    /materials/               # PhysicsMaterials, StandardMaterials
-    /models/
-      dice.glb                # simple die mesh (unit cube with correct UV)
-      table.glb               # table + rails (or use primitive geometry)
-    /textures/
-      dice_albedo.png
-      ui_icons.png
-  /docs/
-    DESIGN_OVERVIEW.md        # goals, rules, modifier spec, hooks
-    SCORING_SPEC.md           # written rules, examples, edge-cases
-    TEST_CASES_SCORING.csv    # inputs → expected outputs
-    MODIFIER_CATALOG.md       # each modifier: purpose, hooks used, conflicts
-    QA_CHECKLIST.md           # per-week acceptance criteria
-    RELEASE_NOTES.md
-  /export/
-    presets.cfg               # export presets configured in Godot
-  /scenes/
-    Game.tscn                 # root level; loads others
-    /core/
-      Table3D.tscn            # StaticBody3D floor + 4 walls
-      Dice3D.tscn             # RigidBody3D with FaceAnchors (6 markers)
-      CameraRig.tscn          # orbit/pan/zoom rig (SpringArm3D + Camera3D)
-    /ui/
-      HUD.tscn                # CanvasLayer: labels, buttons (Roll/Bank)
-      TutorialOverlay.tscn    # intro steps
-      ModifiersPanel.tscn     # preset dropdown, toggles (dev-only at first)
-    /effects/
-      ScreenShake.tscn        # optional
-      Confetti.tscn           # optional
-  /scripts/
-    GameManager.gd            # state machine: lobby/turn/roll/score/end
-    DiceController.gd         # spawning, pooling, bulk roll commands
-    Dice3D.gd                 # roll/settle/read top; kept state
-    Table3D.gd                # (optional) helper for bounds & cleanup
-    CameraRig.gd              # orbit/pan/zoom
-    ScoringEngine.gd          # pure logic (rules)
-    FarkleRules.gd            # rule config (target score, variants)
-    ModifierSystem.gd         # hook runner: register, activate, call hooks
-    /modifiers/
-      Mod_BigDice.gd
-      Mod_LowGravity.gd
-      Mod_MissingDie.gd
-      Mod_DoubleOnes.gd
-      Mod_SameFaceSwarm.gd
-    /ui/
-      HUD.gd
-      TutorialOverlay.gd
-      ModifiersPanel.gd
-    /util/
-      SaveConfig.gd           # ConfigFile wrapper (options/preset)
-      RNG.gd                  # seeded RNG helpers
-      Pools.gd                # pooled arrays, temp vectors (perf)
-  /tests/                     # data + manual test notes (no code required)
-    MANUAL_ROLL_LOG.md        # Week 4 accuracy runs
-    PERFORMANCE_NOTES.md
-  project.godot
-  README.md
-```
+This project is a web-based version of the classic dice game **Farkle**. Our goal is to deliver a fun, polished, and highly customizable Farkle experience in the browser. The game features interactive dice, robust score banking, run/turn management, and dynamic scoring rules. The main distinguishing feature is the planned addition of **Chaos Modifiers** that radically change the gameplay.
 
 ---
 
-# Scene Graphs (high-level)
+## Features
 
-## Game.tscn
-
-```
-Game (Node)
- ├─ Table3D (StaticBody3D)
- ├─ DiceRoot (Node3D)
- │   └─ Dice3D x6
- ├─ CameraRig (Node3D)
- └─ UI (CanvasLayer)
-     ├─ HUD (Control)
-     └─ TutorialOverlay (Control, hidden by default)
-```
-
-## Dice3D.tscn
-
-```
-Dice3D (RigidBody3D)
- ├─ MeshInstance3D (die mesh)
- ├─ CollisionShape3D
- └─ FaceAnchors (Node3D)
-     ├─ Face1 (Marker3D)  # each centered on a face, outward axis consistent
-     ├─ Face2
-     ├─ Face3
-     ├─ Face4
-     ├─ Face5
-     └─ Face6
-```
-
-## HUD.tscn
-
-```
-HUD (Control)
- ├─ StatusLabel
- ├─ ValuesLabel
- ├─ Buttons
- │   ├─ RollButton
- │   ├─ BankButton
- │   └─ EndTurnButton
- └─ ModifiersPanel (dev-only toggle until Week 8)
-```
+- **Interactive Dice Rolling:** Six dice rolled with secure, pseudo-randomness.
+- **Dice Selection:** Select dice showing 1, 5, or valid sets for scoring (e.g., three-of-a-kind).
+- **Score Banking:** Bank points from selected dice to your current run score.
+- **Run and Turn Management:** Core game logic for banking scores, ending turns, and losing a run (Farkle!).
+- **Standard Scoring Rules:** Support for three-of-a-kind, single 1s and 5s, and more.
+- **Dynamic UI:** Responsive buttons and score displays to guide the player.
+- **Planned Polish:** Improved CSS styling, layout, and a tutorial overlay.
 
 ---
 
-# Naming & Conventions
+## 🤯 Chaos Modifiers (Planned)
 
-* **Scenes:** PascalCase (`Game.tscn`, `Dice3D.tscn`)
-* **Scripts:** PascalCase matching scene or system (`GameManager.gd`)
-* **Nodes:** PascalCase; variables `snake_case`
-* **Signals:** past-tense events (`roll_started`, `dice_settled`)
-* **Folders:** lower_snake (`/assets/models`, `/scripts/modifiers`)
-* **Modifiers:** `Mod_*` prefix, one hook section per file with short docstring.
+The Chaos Modifiers are game-altering rules designed to shake up the standard Farkle experience and increase replayability. These features are prioritized as they represent the project's unique value proposition.
 
----
-
-# Roles & Standing Cadence
-
-* **PM/QA:** Maintains QA_CHECKLIST.md, runs acceptance at end of each week, assembles short risk report.
-* **Gameplay:** Dice physics, settle/read, keep states, reroll flow.
-* **Systems:** Scoring spec, turn state machine, modifiers framework, save.
-* **UX:** HUD, tutorial, status copy, audio, accessibility.
-
-**Weekly rhythm**
-
-* Mon: planning (pick 6–10 small tickets; each ≤1 day).
-* Wed: midpoint demo; adjust scope.
-* Fri: acceptance pass; tag weekly release.
+| Modifier | Effect on Gameplay | Status |
+| **Variable Dice Pool** | On roll, the number of dice available is randomly set between 4 and 8 (instead of the standard 6). | To Do |
+| **Double Points** | A randomly selected die (or a specific die value) has its score value doubled *if* it is successfully banked. | To Do |
+| **Forced Bank** | At the beginning of the turn, the player is forced to select and bank a single '1' or '5' *if available*, disrupting plans for larger sets. | To Do |
+| **Mirror Image** | When a player banks a set of three dice, the next die rolled will automatically show the same value as the **lowest** banked die in that set (for the first roll only). | To Do |
+| **Custom Scoring** | Planned option to allow players to change the point requirements or values of 1s, 5s, and sets before the game starts. | To Do |
 
 ---
 
-# Acceptance Checklists (per milestone)
+## 🚀 Getting Started
 
-**Week 4 (Dice prototype)**
+To view or run this project locally, follow these simple steps.
 
-* [ ] 6 dice spawn, roll, and remain on table.
-* [ ] Settle detection halts UI until complete.
-* [ ] Top face read ≥95% across 30 trials; ambiguous die re-rolls automatically.
-* [ ] Camera orbit/pan/zoom usable with mouse + trackpad.
+### 🛠️ Technologies Used
 
-**Week 6 (Turn loop)**
+This project is built using foundational web technologies:
 
-* [ ] Keep/unkeep visible and persistent across rolls.
-* [ ] Reroll only unkept dice.
-* [ ] Farkle loses round points; bank adds; next player rotates correctly.
-* [ ] Full 2-player game completed without manual intervention.
+- **Frontend:** **HTML5**, **CSS3**, **JavaScript** (Vanilla)
+- **Styling:** Custom CSS for component styling and layout.
+- **Deployment:** [Specify your deployment method, e.g., GitHub Pages]
 
-**Week 8 (Modifiers foundation)**
+### Installation
 
-* [ ] Preset selection persists into a round.
-* [ ] Big Dice visibly larger and adjusts impulse; Low Gravity visibly floaty.
-* [ ] Modifier banner lists active modifiers at round start.
-
-**Week 10 (Ship)**
-
-* [ ] Options saved/loaded; defaults sensible.
-* [ ] Exports created; README includes controls, rules, presets, credits.
-* [ ] 10 consecutive games without a crash; frame time stable.
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/your-username/farkle-web.git](https://github.com/your-username/farkle-web.git)
+    ```
+2.  **Navigate to the project directory:**
+    ```bash
+    cd farkle-web
+    ```
+3.  **Open the game:**
+    * Simply open `index.html` in your web browser to start playing immediately.
 
 ---
 
-# Modifier Backlog (prioritized, simple first)
+## How to Play
 
-1. **Big Dice** — scale up dice; impulse scaled accordingly.
-2. **Low Gravity** — per-die gravity scale reduced during round.
-3. **Missing Die** — spawn 5 instead of 6 dice this round.
-4. **Double Ones** — scoring hook maps 1s from 100 to 200.
-5. **Same-Face Swarm** — after settle, 20% chance all dice snap/reroll to the mode.
-6. **Sticky Edges** — dice near rails auto-mark kept.
-7. **Exploding Sixes** — each 6 grants a bonus die (spawn temp 7th this roll).
-8. **Heavy Fives** — 5s worth 75; 1s worth 50 (tradeoff variant).
-9. **Reverse Straight** — 2–6 straight counts; 1 is neutral.
-
-*(Aim for 5 by Week 9; cap total at 6–8.)*
+1.  **Roll Dice:** Click **"Roll All Dice"** to roll the available dice.
+2.  **Select Dice:** Click dice showing 1, 5, or valid sets (like three-of-a-kind) to move them to the banked area and add their value to your score.
+3.  **Bank Score:** Click **"Bank Score"** to add your current banked points to your run score and remove those dice from play.
+4.  **Continue Rolling:** Keep rolling and banking until you lose your run or choose to end your turn.
+5.  **End Turn:** Click **"End Turn"** to add your total run score to your overall score and start a new run with all six dice.
+6.  **Lose Run (Farkle):** If you roll and **no** dice can be selected, your entire run score resets to zero, and your turn ends.
 
 ---
 
-# Risks & Pre-agreed Scope Cuts
+## Timeline & Milestones
 
-* If Week 4 read accuracy <95% → add re-roll-on-ambiguous and advance; don’t chase perfect physics.
-* If Week 6 slips → freeze scoring set; defer rare combos.
-* If Week 8 slips → ship 2–3 modifiers total; keep presets minimal.
-* If Week 10 slips → skip confetti/skins; ship stable core.
+This timeline is structured around team deliverables to ensure development stays on track.
+
+| Dates | Goals & Deliverables |
+| :--- | :--- |
+| Oct 9–18 | Project setup, basic dice rolling/selection, and **Sprint 2 Final Report** submission. |
+| Oct 19–25 | Implement core scoring rules, run/turn management, and prepare for **Freeze 1: Team Demo**. |
+| Oct 26–Nov 1 | Conduct **Freeze 1: Demo Reflection** and begin initial implementation of **Chaos Modifiers**. |
+| Nov 2–15 | Focused implementation of all **Chaos Modifiers** and **Custom Scoring**. Includes **Sprint 3: Team Initial Planning** and **Team Final Report**. |
+| Nov 16–29 | UI/CSS Polish, accessibility improvements, adding help overlay. Includes **Sprint 4: Team Initial Planning** and **Module 5 Report**. |
+| Nov 30–Dec 6 | Final bug fixing, rule tweaks, extensive playtesting, and preparation for **Freeze 2: Team Demo**. |
+| Dec 7–17 | Final submission package, documentation, **Week-13: Final Report**, and **Conclusion: Final Reflection**. |
 
 ---
 
-# Non-art Asset Minimum
+## 🗺️ Roadmap / Future Enhancements
 
-* 1 die mesh + collision, 1 table with rails, 4 SFX, 1 readable UI font.
-* Simple UI icons (text OK until final week).
+These items are currently planned for implementation:
+
+-   Refine dice selection logic and handle all edge cases (e.g., scoring a full house, four-of-a-kind, etc.).
+-   Polish the site with professional **CSS styling** for an immersive look.
+-   Add an instructions/help overlay for new players.
+-   Conduct thorough playtesting and fix any remaining bugs.
 
 ---
 
-# Task Board (sample tickets this week)
 
-* Create `Table3D.tscn` with walls; assign PhysicsMaterials (friction/bounce).
-* Create `Dice3D.tscn` with 6 FaceAnchors placed/normalized consistently.
-* Implement roll inputs (impulse presets list).
-* Settle criteria & timeout; ambiguous detection plan.
-* CameraRig orbit/pan/zoom with limits.
-* HUD: Roll button, Values label, simple status text.
-* QA: 30-roll log sheet, tally accuracy, note failure cases.
+## License
+
+This project is [Specify License, e.g., MIT License, or keep the existing note: 'for educational purposes only'].
