@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoDice AI Demo</title>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <h1>Dice Roller</h1>
+
+  <div id="dice-container">
+    <!-- six dice buttons for manual interaction -->
+    <button id="die-1">Die 1</button>
+    <button id="die-2">Die 2</button>
+    <button id="die-3">Die 3</button>
+    <button id="die-4">Die 4</button>
+    <button id="die-5">Die 5</button>
+    <button id="die-6">Die 6</button>
+  </div>
+
+  <button id="roll-btn">Roll All Dice</button>
+  <button id="select-all-btn">Select All</button>
+  <button id="bank-btn">Bank Score</button>
+  <button id="endturn-btn">End Turn</button>
+
+  <h2>Score: <span id="score">0</span></h2>
+  <h2>Run Score: <span id="runscore">0</span></h2>
+  <h2>Total Score: <span id="totalscore">0</span></h2>
+  <div id="message"></div>
+
+  <!-- JS Module Imports -->
+  <script type="module">
+    import c_DiceRunGame from "./js/c_DiceRunGame.js";
+    const game = new c_DiceRunGame();
+    window.game = game; // optional for debugging
+  </script>
+</body>
+</html>
