@@ -19,8 +19,6 @@ export default class c_DiceRunGame {
         this.currentRollScore = 0;
         this.runScore = 0;
         this.totalScore = 0;
-        this.rollsThisTurn = 0;
-        this.devModeEnabled = false;
         this.hasRolledAtLeastOnce = false;
 
         this.generator = null;
@@ -33,9 +31,9 @@ export default class c_DiceRunGame {
         this.ui._setMessage("Computing probabilities…");
         this.probabilityModel._initialize();
         this.generator = new c_PatternBasedDiceGenerator(this.classifier, this.probabilityModel.DICE_ROLLS);
-        if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = (this.rollsThisTurn === 0) ? "Pass" : "End Turn";}
+        if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
 
-        this.ui._setMessage('Ready. Press "Roll" to begin. (Press "D" to toggle Dev Mode)');
+        this.ui._setMessage('Ready. Press "Roll" to begin.');
         this._refreshUI();
     }
 
@@ -52,23 +50,9 @@ export default class c_DiceRunGame {
         if (this.ui.buttonSelectAll) {
             this.ui.buttonSelectAll.addEventListener("click", () => this._onSelectAllAvailable());
         }
-
-        document.addEventListener("keydown", (eventObject) => {
-            const keyValue = eventObject.key || eventObject.code;
-            if (keyValue === "d" || keyValue === "D") {
-                this.devModeEnabled = !this.devModeEnabled;
-                const statusText = this.devModeEnabled ? "ON — roll limit disabled" : "OFF — 3 rolls per turn";
-                this.ui._setMessage(`Dev Mode ${statusText}`);
-            }
-        });
     }
 
     _onRoll() {
-        if (!this.devModeEnabled && this.rollsThisTurn >= 3) {
-            this.ui._setMessage("You have reached the maximum of 3 rolls. Bank or End Turn.");
-            return;
-        }
-
         if (this.bankedDiceMask.every(Boolean)) {
             this.bankedDiceMask = [false, false, false, false, false, false];
         }
@@ -81,9 +65,21 @@ export default class c_DiceRunGame {
             if (!this.bankedDiceMask[i]) this.latestDiceValues[i] = rolled[copyIndex++];
         }
 
-        this.rollsThisTurn++;
         this.hasRolledAtLeastOnce = true;
         this.selectedDiceMask = [false, false, false, false, false, false];
+
+        // Farkle detection
+        const selectableMask = this._computeSelectableMaskConsideringBanked();
+        if (!this._anyTrue(selectableMask)) {
+            // Farkle! End run, reset runScore, show message, end turn
+            this.runScore = 0;
+            this.currentRollScore = 0;
+            this.selectedDiceMask = [false, false, false, false, false, false];
+            this.bankedDiceMask = [false, false, false, false, false, false];
+            this.hasRolledAtLeastOnce = false;
+            this._refreshUI(resultObject.patternKey, resultObject.score, "Farkle! No scoring dice. Turn ended.");
+            return;
+        }
 
         this._refreshUI(resultObject.patternKey, resultObject.score);
     }
@@ -147,7 +143,6 @@ export default class c_DiceRunGame {
         this.totalScore += this.runScore;
         this.runScore = 0;
         this.currentRollScore = 0;
-        this.rollsThisTurn = 0;
         this.bankedDiceMask = [false, false, false, false, false, false];
         this.selectedDiceMask = [false, false, false, false, false, false];
         this.hasRolledAtLeastOnce = false;
@@ -181,23 +176,21 @@ export default class c_DiceRunGame {
             if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
             if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = true;
         } else {
-            const canRoll = this.devModeEnabled || this.rollsThisTurn < 3;
-            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = !canRoll;
+            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
             if (this.ui.buttonBank) this.ui.buttonBank.disabled = this.currentRollScore <= 0;
             if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
             if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = !this._anyTrue(selectableMask);
-            if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = (this.rollsThisTurn === 0) ? "Pass" : "End Turn";}
+            if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
         }
 
         this.ui._applyDiceEnabledMask(selectableMask);
         this.ui._renderDiceLabels(this.latestDiceValues, this.selectedDiceMask, this.bankedDiceMask);
 
-        const rollsCaption = this.devModeEnabled ? `Roll ${this.rollsThisTurn}` : `Roll ${this.rollsThisTurn}/3`;
         const baseMessage =
             overrideMessage ??
             (mostRecentPatternKey
-                ? `${rollsCaption} — Last pattern: ${mostRecentPatternKey.replaceAll("_", " ")} (+${mostRecentPatternScore})`
-                : (!this.hasRolledAtLeastOnce ? "Waiting for first roll…" : `${rollsCaption}`));
+                ? `Last pattern: ${mostRecentPatternKey.replaceAll("_", " ")} (+${mostRecentPatternScore})`
+                : (!this.hasRolledAtLeastOnce ? "Waiting for first roll…" : ""));
 
         this.ui._setMessage(baseMessage);
         this.ui._setScoreDisplay(this.currentRollScore, this.runScore, this.totalScore);
