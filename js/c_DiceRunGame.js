@@ -96,28 +96,38 @@ export default class c_DiceRunGame {
         this._refreshUI();
     }
 
-    _onSelectAllAvailable() {
-        // need to make this also un-select on click
-        if (!this.hasRolledAtLeastOnce) return;
+_onSelectAllAvailable() {
+    if (!this.hasRolledAtLeastOnce) return;
 
-        const selectableMask = this._computeSelectableMaskConsideringBanked();
-        let selectedAny = false;
-        for (let i = 0; i < 6; i++) {
-            if (selectableMask[i]) {
-                this.selectedDiceMask[i] = true;
-                selectedAny = true;
-            } else {
-                // ensure non-selectable dice are not marked selected
-                this.selectedDiceMask[i] = this.selectedDiceMask[i] && selectableMask[i];
-            }
+    const selectableMask = this._computeSelectableMaskConsideringBanked();
+   
+    // Check if all selectable dice are already selected
+    const allSelectableSelected = selectableMask.every(
+        (val, i) => !val || this.selectedDiceMask[i]
+    );
+
+    // Toggle: if all selectable dice are already selected, deselect them
+    const newSelectState = !allSelectableSelected;
+
+    let changed = false;
+    for (let i = 0; i < 6; i++) {
+        if (selectableMask[i]) {
+            this.selectedDiceMask[i] = newSelectState;
+            changed = true;
+        } else {
+            // Non-selectable dice remain untouched
+            this.selectedDiceMask[i] = this.selectedDiceMask[i] && selectableMask[i];
         }
-        if (!selectedAny) {
-            this.ui._setMessage("No selectable dice right now.");
-            return;
-        }
-        this._recomputeSelectedScore();
-        this._refreshUI(undefined, undefined, "All available dice selected.");
     }
+
+    if (!changed) {
+        this.ui._setMessage("No selectable dice right now.");
+        return;
+    }
+
+    this._recomputeSelectedScore();
+    this._refreshUI(undefined, undefined, newSelectState ? "All available dice selected." : "All available dice deselected.");
+}
 
     _onBank() {
         if (!this.hasRolledAtLeastOnce) return;
@@ -176,13 +186,23 @@ export default class c_DiceRunGame {
             if (this.ui.buttonBank) this.ui.buttonBank.disabled = true;
             if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
             if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = true;
-        } else {
-            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
-            if (this.ui.buttonBank) this.ui.buttonBank.disabled = this.currentRollScore <= 0;
-            if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
-            if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = !this._anyTrue(selectableMask);
-            if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
+        } 
+        // DOESN'T WORK RIGHT NOW
+        // if (this.bankedDiceMask.every(v => v === false)) {
+        //     if (this.ui.buttonEndTurn) { this.ui.buttonEndTurn.textContent = "Pass"; }
+        // }
+
+        else {
+        if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
+        if (this.ui.buttonBank) this.ui.buttonBank.disabled = this.currentRollScore <= 0;
+        if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
+        if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = !this._anyTrue(selectableMask);
+        if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
+        if (this.ui.buttonSelectAll) {
+            const allSelectableAlreadySelected = selectableMask.every((v, i) => !v || this.selectedDiceMask[i]);
+            this.ui.buttonSelectAll.textContent = allSelectableAlreadySelected ? "Deselect All" : "Select All";
         }
+    }
 
         this.ui._applyDiceEnabledMask(selectableMask);
         this.ui._renderDiceLabels(this.latestDiceValues, this.selectedDiceMask, this.bankedDiceMask);

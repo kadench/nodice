@@ -46,6 +46,55 @@ export default class c_UIRenderer {
         }
     }
 
+       _updateActionButtons({ hasRolledAtLeastOnce, selectableMask, selectedMask, bankedMask }) {
+        // Detect hot dice: all six are banked (next roll must free them)
+        const isHotDice = bankedMask && bankedMask.length === 6 && bankedMask.every(Boolean);
+
+        // --- Roll ---
+        if (this.buttonRoll) {
+            // Force roll on hot dice
+            this.buttonRoll.disabled = !hasRolledAtLeastOnce ? false : false; // can always roll
+        }
+
+        // --- Bank ---
+        if (this.buttonBank) {
+            // Disable bank on hot dice; otherwise enabled only if any die is selected
+            const anySelected = Array.isArray(selectedMask) && selectedMask.some(Boolean);
+            this.buttonBank.disabled = isHotDice || !anySelected || (Array.isArray(bankedMask) && bankedMask.every(Boolean));
+        }
+
+        // --- End Turn / Pass ---
+        if (this.buttonEndTurn) {
+            if (!hasRolledAtLeastOnce) {
+                // Pre-first-roll: act like "Pass"
+                this.buttonEndTurn.textContent = "Pass";
+                this.buttonEndTurn.disabled = false; // allow passing
+            } else {
+                this.buttonEndTurn.textContent = "End Turn";
+                // During hot dice, you cannot end the turn
+                this.buttonEndTurn.disabled = !!isHotDice;
+            }
+        }
+
+        // --- Select All / Deselect All ---
+        if (this.buttonSelectAll) {
+            const anySelectable = Array.isArray(selectableMask) && selectableMask.some(Boolean);
+            this.buttonSelectAll.disabled = !anySelectable;
+
+            if (anySelectable) {
+                const allSelectableAlreadySelected = selectableMask.every((v, i) => !v || selectedMask[i]);
+                this.buttonSelectAll.textContent = allSelectableAlreadySelected ? "Deselect All" : "Select All";
+            } else {
+                this.buttonSelectAll.textContent = "Select All";
+            }
+        }
+    }
+
+    // Optional tiny helper if you want to reuse elsewhere
+    _allSelectableAlreadySelected(selectableMask, selectedMask) {
+        return selectableMask.every((v, i) => !v || selectedMask[i]);
+    }
+
     _applyDiceEnabledMask(selectableMask) {
         const diceClicks = this._getDiceImg();
             // If the button is hidden (banked), ensure it is disabled as well

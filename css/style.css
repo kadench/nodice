@@ -5,6 +5,7 @@
     --charcoal: #344055ff;
     --hot-pink: #f564a9ff;
     --vermilion: #f24236ff;
+    --gradient: ""
 
     /* CSS HSL */
     --dun: hsla(39, 27%, 78%, 1);
@@ -25,11 +26,14 @@ button {
 
 body {
     /* make background gradients */
-    background: radial-gradient(135deg, var(--dun), var(--charcoal), var(--carolina-blue), var(--hot-pink), var(--vermilion));
-    background-repeat: repeat-x;
+    background: linear-gradient(135deg, var(--carolina-blue), var(--hot-pink), var(--vermilion));
+    background-repeat: no-repeat;
+    background-size: cover;
     color: var(--charcoal);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     text-align: center;
+    height: 100vh;
+    overflow: hidden;
 }
 
 /* All of this is necessary for the dice to properly display*/
