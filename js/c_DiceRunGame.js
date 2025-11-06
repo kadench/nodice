@@ -50,6 +50,11 @@ export default class c_DiceRunGame {
         if (this.ui.buttonSelectAll) {
             this.ui.buttonSelectAll.addEventListener("click", () => this._onSelectAllAvailable());
         }
+
+        const diceClicks = this.ui._getDiceImg();
+        for (let i = 0; i < diceClicks.length; i++) {
+            diceClicks[i].addEventListener("click", () => this._onToggleSelectDie(i));
+        }
     }
 
     _onRoll() {
@@ -97,6 +102,7 @@ export default class c_DiceRunGame {
     }
 
     _onSelectAllAvailable() {
+        // need to make this also un-select on click
         if (!this.hasRolledAtLeastOnce) return;
 
         const selectableMask = this._computeSelectableMaskConsideringBanked();

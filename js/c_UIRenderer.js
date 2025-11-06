@@ -19,26 +19,63 @@ export default class c_UIRenderer {
             if (el) byId.push(el);
         }
         if (byId.length === 6) return byId;
+        // ...does it need to read the elements and then recreate them? can't we just make them from scratch?
 
         // Fallback to buttons inside #dice-container (kept for compatibility)
         if (!this.containerDice) return [];
         return Array.from(this.containerDice.querySelectorAll("button"));
     }
 
+    _getDiceImg() {
+        // so this is going to be like _getDiceButtons, but instead with the nested <div> structure for imgs
+        const byId = [];
+        for (let i = 1; i <= 6; i++) {
+            const dien = document.getElementsByClassName('dice-display')[i];
+            if (dien) byId.push(dien);
+        }
+        if (byId.length === 6) return byId;
+
+        if (!this.containerDice) return [];
+        return Array.from(this.containerDice.querySelectorAll(".dice-display"));
+        //this might not work
+    }
+
     _renderDiceLabels(diceValues, selectedMask, bankedMask) {
+        // so this functions doesn't make new dice, it just changes the existing ones...
         const diceButtons = this._getDiceButtons();
+        const diceImg = this._getDiceImg();
         for (let i = 0; i < diceButtons.length && i < diceValues.length; i++) {
             const isSelected = !!selectedMask[i];
             const isBanked = !!bankedMask[i];
             diceButtons[i].hidden = isBanked;
             if (!isBanked) {
-                const suffix = isSelected ? " [selected]" : "";
+                // selected is kind of obnoxious, S is more clear
+                const suffix = isSelected ? " [S]" : "";
                 
-                diceButtons[i].textContent = `Die ${i + 1}: ${diceValues[i]}${suffix}`;
+                // also the 'Die -#' is also obnoxious
+                diceButtons[i].textContent = `${diceValues[i]}${suffix}`;
                 // change bg of selected dice
-                diceButtons[i].textContent.includes("[selected]")
+                diceButtons[i].textContent.includes("[S]")
                     ? diceButtons[i].classList.add("selected")
                     : diceButtons[i].classList.remove("selected");
+
+            }
+        }
+
+        for (let i = 0; i < diceImg.length && i < diceValues.length; i++) {
+            const isSelected = !!selectedMask[i];
+            const isBanked = !!bankedMask[i];
+            diceImg[i].hidden = isBanked;
+            if (!isBanked) {
+                
+                diceImg[i].lastElementChild.style.backgroundPosition = `-${diceValues[i]-1}00% 0%`;
+                // diceImg[i].firstChild.style. not really sure what do with this yet other than I need a conditional to set the background
+                const suffix = isSelected ? "selected" : "";
+                //diceImg[i].firstElementChild.classList.toggle(`${suffix}`);
+                diceImg[i].firstElementChild.classList.toggle('selected', isSelected);
+                //diceImg[i].firstElementChild.classList.contains('selected')
+                //? diceImg[i].firstElementChild.classList.add('selected')
+                //: diceImg[i].firstElementChild.classList.remove('selected');
 
             }
         }
@@ -46,9 +83,14 @@ export default class c_UIRenderer {
 
     _applyDiceEnabledMask(selectableMask) {
         const diceButtons = this._getDiceButtons();
+        const diceClicks = this._getDiceImg();
         for (let i = 0; i < diceButtons.length && i < selectableMask.length; i++) {
             // If the button is hidden (banked), ensure it is disabled as well
             diceButtons[i].disabled = diceButtons[i].hidden ? true : !selectableMask[i];
+        }
+        for (let i = 0; i < diceClicks.length && i < selectableMask.length; i++) {
+            //diceClicks[i].firstElementChild.disabled = diceClicks[i].hidden ? true : !selectableMask[i];
+            diceClicks[i].firstElementChild.classList.toggle('disabled', !selectableMask[i]); 
         }
     }
 
