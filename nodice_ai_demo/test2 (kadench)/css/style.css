@@ -1,0 +1,7 @@
+button.selected {
+    background-color: #39b93996;
+    border: 3px solid black;
+}
+button {
+    margin-bottom: 1%;
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NoDice</title>
+  <link rel="icon" type="image/x-icon" href="assets/dicedn.png"/>
+  <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+  <h1>Dice Roller</h1>
+
+  <div id="dice-container">
+    <!-- six dice buttons for manual interaction -->
+    <!-- okay... this layout sucks. changing -->
+    <!--- wait why does this exist? it doesn't do anything. nvm, it just is used to be read first, why can't we just make it in js first?-->
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    <div class="dice-display">
+        <div class="dice-color"></div>
+        <div class="dice-numb"></div>
+    </div>
+    
+  </div>
+
+  <button id="roll-btn">Roll All Dice</button>
+  <button id="select-all-btn">Select All</button>
+  <button id="bank-btn">Bank Score</button>
+  <button id="endturn-btn">End Turn</button>
+
+  <h2>Score: <span id="score">0</span></h2>
+  <h2>Run Score: <span id="runscore">0</span></h2>
+  <h2>Total Score: <span id="totalscore">0</span></h2>
+  <div id="message"></div>
+
+  <!-- JS Module Imports -->
+  <script type="module">
+    import c_DiceRunGame from "./js/c_DiceRunGame.js";
+    const game = new c_DiceRunGame();
+    window.game = game; // optional for debugging
+  </script>
+</body>
+</html>

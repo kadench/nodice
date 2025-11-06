@@ -1,0 +1,73 @@
+:root {
+    /* CSS HEX */
+    --dun: #d6cbb7ff;
+    --carolina-blue: #7bb4d3ff;
+    --charcoal: #344055ff;
+    --hot-pink: #f564a9ff;
+    --vermilion: #f24236ff;
+
+    /* CSS HSL */
+    --dun: hsla(39, 27%, 78%, 1);
+    --carolina-blue: hsla(201, 50%, 65%, 1);
+    --charcoal: hsla(218, 24%, 27%, 1);
+    --hot-pink: hsla(331, 88%, 68%, 1);
+    --vermilion: hsla(4, 88%, 58%, 1);
+}
+
+
+button.selected {
+    background-color: #39b93996;
+    border: 3px solid black;
+}
+button {
+    margin-bottom: 1%;
+}
+
+body {
+    /* make background gradients */
+    background: radial-gradient(135deg, var(--dun), var(--charcoal), var(--carolina-blue), var(--hot-pink), var(--vermilion));
+    background-repeat: repeat-x;
+    color: var(--charcoal);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+}
+
+/* All of this is necessary for the dice to properly display*/
+
+#dice-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    height: 48px;
+    display: flex;
+    justify-content: center;
+}
+
+.dice-display {
+    width: 48px;
+    height: 48px;
+    position: relative;
+    flex: 0 0 auto;
+    image-rendering: pixelated;
+    margin: 0px 0px 2px 2px;
+}
+
+.dice-color {
+    background-color: white;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /*background-image: url(assets/white.png); gonna update this later*/
+    background-size: 50% 50%;
+}
+/* change color with class - if they exist might as well have them do something*/
+.selected {background-color: lightgreen;}
+.disabled {background-color: lightgray;}
+
+.dice-numb {
+    position: absolute;
+    width:100%;
+    height: 100%;
+    background-image: url(../assets/anitest.gif);
+    background-size: 1000% 1000%;
+    /*bacground-position: -700% 0% this'll be a blank die for the start*/
+}
