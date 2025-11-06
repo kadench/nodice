@@ -11,21 +11,6 @@ export default class c_UIRenderer {
         this.buttonSelectAll = document.getElementById("select-all-btn");
     }
 
-    _getDiceButtons() {
-        // Prefer explicit ids die-1..die-6 for deterministic ordering
-        const byId = [];
-        for (let i = 1; i <= 6; i++) {
-            const el = document.getElementById(`die-${i}`);
-            if (el) byId.push(el);
-        }
-        if (byId.length === 6) return byId;
-        // ...does it need to read the elements and then recreate them? can't we just make them from scratch?
-
-        // Fallback to buttons inside #dice-container (kept for compatibility)
-        if (!this.containerDice) return [];
-        return Array.from(this.containerDice.querySelectorAll("button"));
-    }
-
     _getDiceImg() {
         // so this is going to be like _getDiceButtons, but instead with the nested <div> structure for imgs
         const byId = [];
@@ -41,27 +26,7 @@ export default class c_UIRenderer {
     }
 
     _renderDiceLabels(diceValues, selectedMask, bankedMask) {
-        // so this functions doesn't make new dice, it just changes the existing ones...
-        const diceButtons = this._getDiceButtons();
         const diceImg = this._getDiceImg();
-        for (let i = 0; i < diceButtons.length && i < diceValues.length; i++) {
-            const isSelected = !!selectedMask[i];
-            const isBanked = !!bankedMask[i];
-            diceButtons[i].hidden = isBanked;
-            if (!isBanked) {
-                // selected is kind of obnoxious, S is more clear
-                const suffix = isSelected ? " [S]" : "";
-                
-                // also the 'Die -#' is also obnoxious
-                diceButtons[i].textContent = `${diceValues[i]}${suffix}`;
-                // change bg of selected dice
-                diceButtons[i].textContent.includes("[S]")
-                    ? diceButtons[i].classList.add("selected")
-                    : diceButtons[i].classList.remove("selected");
-
-            }
-        }
-
         for (let i = 0; i < diceImg.length && i < diceValues.length; i++) {
             const isSelected = !!selectedMask[i];
             const isBanked = !!bankedMask[i];
@@ -82,12 +47,9 @@ export default class c_UIRenderer {
     }
 
     _applyDiceEnabledMask(selectableMask) {
-        const diceButtons = this._getDiceButtons();
         const diceClicks = this._getDiceImg();
-        for (let i = 0; i < diceButtons.length && i < selectableMask.length; i++) {
             // If the button is hidden (banked), ensure it is disabled as well
-            diceButtons[i].disabled = diceButtons[i].hidden ? true : !selectableMask[i];
-        }
+            //diceButtons[i].disabled = diceButtons[i].hidden ? true : !selectableMask[i];
         for (let i = 0; i < diceClicks.length && i < selectableMask.length; i++) {
             //diceClicks[i].firstElementChild.disabled = diceClicks[i].hidden ? true : !selectableMask[i];
             diceClicks[i].firstElementChild.classList.toggle('disabled', !selectableMask[i]); 

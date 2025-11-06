@@ -42,18 +42,13 @@ export default class c_DiceRunGame {
         if (this.ui.buttonBank) this.ui.buttonBank.addEventListener("click", () => this._onBank());
         if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.addEventListener("click", () => this._onEndTurn());
 
-        const diceButtons = this.ui._getDiceButtons();
-        for (let i = 0; i < diceButtons.length; i++) {
-            diceButtons[i].addEventListener("click", () => this._onToggleSelectDie(i));
+        const diceClicks = this.ui._getDiceImg();
+        for (let i = 0; i < diceClicks.length; i++) {
+            diceClicks[i].addEventListener("click", () => this._onToggleSelectDie(i));
         }
 
         if (this.ui.buttonSelectAll) {
             this.ui.buttonSelectAll.addEventListener("click", () => this._onSelectAllAvailable());
-        }
-
-        const diceClicks = this.ui._getDiceImg();
-        for (let i = 0; i < diceClicks.length; i++) {
-            diceClicks[i].addEventListener("click", () => this._onToggleSelectDie(i));
         }
     }
 
