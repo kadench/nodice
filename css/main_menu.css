@@ -3,7 +3,7 @@
   --stage-padding-top: 28px;
   --bg: linear-gradient(135deg, var(--carolina-blue), var(--hot-pink), var(--vermilion));
   --fg: #fff;
-  --default_font_family: "Comic Sans MS", "Comic Sans", cursive;
+  --default_font_family: "Comic Sans MS", "Comic Sans", sans-serif;
   --shadow: 0 12px 30px rgba(0,0,0,0.45);
   --overlay-alpha: 0.88;
 
