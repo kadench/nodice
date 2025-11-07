@@ -1,61 +1,43 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NoDice</title>
-  <link rel="icon" type="image/x-icon" href="assets/dicedn.png"/>
-  <link rel="stylesheet" href="./css/style.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>NoDice | Menu</title>
+    <link rel="icon" type="image/x-icon" href="assets/dicedn.png"/>
+    <link rel="stylesheet" href="css/main_menu.css">
+    <script src="js/main_menu.js" defer></script>
 </head>
 <body>
-  <h1>Dice Roller</h1>
+    <!-- Fullscreen overlay shown first with Play button -->
+    <div id="start-overlay" class="overlay">
+        <button id="begin" class="btn-base" aria-label="Play / Begin">Play</button>
+    </div>
 
-  <div id="dice-container">
-    <!-- six dice buttons for manual interaction -->
-    <!-- okay... this layout sucks. changing -->
-    <!--- wait why does this exist? it doesn't do anything. nvm, it just is used to be read first, why can't we just make it in js first?-->
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    <div class="dice-display">
-        <div class="dice-color"></div>
-        <div class="dice-numb"></div>
-    </div>
-    
-  </div>
+    <main id="stage" class="stage">
+        <!-- Placeholder logo image. Replace with your actual SVG/PNG -->
+        <img id="logo" class="logo is-hidden" src="https://placecats.com/1000/1000" alt="NO DICE Logo">
 
-  <button id="roll-btn">Roll All Dice</button>
-  <button id="select-all-btn">Select All</button>
-  <button id="bank-btn">Bank Score</button>
-  <button id="endturn-btn">End Turn</button>
+        <!-- Options area (appears when logo is docked) -->
+        <section id="options" class="options" aria-label="Options">
+        <a href="game.html"><button class="btn-base">New Game aaaa</button></a>
+        <button class="btn-base">How to Play</button>
+        <button class="btn-base">Quit</button>
+        </section>
+    <form class="form-90s" action="#" method="get">
+    <label for="mode">Game Mode</label>
+    <select id="mode" name="mode" class="ctrl-90s select-90s">
+        <option value="story">Story Mode</option>
+        <option value="arcade">Arcade</option>
+        <option value="time">Time Attack</option>
+        <option value="custom">Custom</option>
+    </select>
 
-  <h2>Score: <span id="score">0</span></h2>
-  <h2>Run Score: <span id="runscore">0</span></h2>
-  <h2>Total Score: <span id="totalscore">0</span></h2>
-  <div id="message"></div>
+    <label for="lives">Starting Lives</label>
+    <input id="lives" name="lives" type="number" inputmode="numeric" min="0" max="99" step="1" value="3" class="ctrl-90s number-90s" />
 
-  <!-- JS Module Imports -->
-  <script type="module">
-    import c_DiceRunGame from "./js/c_DiceRunGame.js";
-    const game = new c_DiceRunGame();
-    window.game = game; // optional for debugging
-  </script>
+  <button type="submit" class="btn-base">Apply</button>
+</form>
+
+    </main>
 </body>
 </html>
