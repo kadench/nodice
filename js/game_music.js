@@ -7,8 +7,8 @@
 
 
 window.addEventListener("DOMContentLoaded", () => {
-  const entrance = new Audio("assets/nodice_entrance.mp3");
-  const paperback = new Audio("assets/paperback.mp3");
+  const entrance = new Audio("assets/audio/music/nodice_theme.wav");
+  const paperback = new Audio("assets/audio/music/paperback.mp3");
 
   const enableAudio = () => {
     // Play first sound

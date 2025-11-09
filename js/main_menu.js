@@ -1,4 +1,4 @@
-//NoDice Entrance by Kaden Hansen
+//Slice and Dice by Kaden Hansen
 //License: All Rights Reserved ©
 
 //Paperback by Bensound.com
@@ -7,11 +7,11 @@
 
 
 // === Audio setup ===
-const entrance = new Audio("assets/nodice_entrance.mp3");
+const entrance = new Audio("assets/audio/music/nodice_theme.wav");
 
 // Menu music playlist
 const playlist = [
-  { src: "assets/paperback.mp3" },
+  { src: "assets/audio/music/paperback.mp3" },
   // { src: "assets/another_song.mp3" },
 ];
 let currentTrack = 0;
