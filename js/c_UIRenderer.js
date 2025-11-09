@@ -9,10 +9,14 @@ export default class c_UIRenderer {
         this.buttonBank = document.getElementById("bank-btn");
         this.buttonEndTurn = document.getElementById("endturn-btn");
         this.buttonSelectAll = document.getElementById("select-all-btn");
+
+        // toggle: show/hide the bottom info box (default true)
+        this.showInfoBox = true;
+
+        this._lastMessage = "";
     }
 
     _getDiceImg() {
-        // so this is going to be like _getDiceButtons, but instead with the nested <div> structure for imgs
         const byId = [];
         for (let i = 1; i <= 6; i++) {
             const dien = document.getElementsByClassName('dice-display')[i];
@@ -22,7 +26,6 @@ export default class c_UIRenderer {
 
         if (!this.containerDice) return [];
         return Array.from(this.containerDice.querySelectorAll(".dice-display"));
-        //this might not work
     }
 
     _renderDiceLabels(diceValues, selectedMask, bankedMask) {
@@ -32,33 +35,22 @@ export default class c_UIRenderer {
             const isBanked = !!bankedMask[i];
             diceImg[i].hidden = isBanked;
             if (!isBanked) {
-                
                 diceImg[i].lastElementChild.style.backgroundPosition = `-${diceValues[i]-1}00% 0%`;
-                // diceImg[i].firstChild.style. not really sure what do with this yet other than I need a conditional to set the background
-                const suffix = isSelected ? "selected" : "";
-                //diceImg[i].firstElementChild.classList.toggle(`${suffix}`);
                 diceImg[i].firstElementChild.classList.toggle('selected', isSelected);
-                //diceImg[i].firstElementChild.classList.contains('selected')
-                //? diceImg[i].firstElementChild.classList.add('selected')
-                //: diceImg[i].firstElementChild.classList.remove('selected');
-
             }
         }
     }
 
-       _updateActionButtons({ hasRolledAtLeastOnce, selectableMask, selectedMask, bankedMask }) {
-        // Detect hot dice: all six are banked (next roll must free them)
+    _updateActionButtons({ hasRolledAtLeastOnce, selectableMask, selectedMask, bankedMask }) {
         const isHotDice = bankedMask && bankedMask.length === 6 && bankedMask.every(Boolean);
 
         // --- Roll ---
         if (this.buttonRoll) {
-            // Force roll on hot dice
-            this.buttonRoll.disabled = !hasRolledAtLeastOnce ? false : false; // can always roll
+            this.buttonRoll.disabled = false; // can always roll
         }
 
         // --- Bank ---
         if (this.buttonBank) {
-            // Disable bank on hot dice; otherwise enabled only if any die is selected
             const anySelected = Array.isArray(selectedMask) && selectedMask.some(Boolean);
             this.buttonBank.disabled = isHotDice || !anySelected || (Array.isArray(bankedMask) && bankedMask.every(Boolean));
         }
@@ -66,12 +58,10 @@ export default class c_UIRenderer {
         // --- End Turn / Pass ---
         if (this.buttonEndTurn) {
             if (!hasRolledAtLeastOnce) {
-                // Pre-first-roll: act like "Pass"
                 this.buttonEndTurn.textContent = "Pass";
-                this.buttonEndTurn.disabled = false; // allow passing
+                this.buttonEndTurn.disabled = false;
             } else {
                 this.buttonEndTurn.textContent = "End Turn";
-                // During hot dice, you cannot end the turn
                 this.buttonEndTurn.disabled = !!isHotDice;
             }
         }
@@ -90,17 +80,13 @@ export default class c_UIRenderer {
         }
     }
 
-    // Optional tiny helper if you want to reuse elsewhere
     _allSelectableAlreadySelected(selectableMask, selectedMask) {
         return selectableMask.every((v, i) => !v || selectedMask[i]);
     }
 
     _applyDiceEnabledMask(selectableMask) {
         const diceClicks = this._getDiceImg();
-            // If the button is hidden (banked), ensure it is disabled as well
-            //diceButtons[i].disabled = diceButtons[i].hidden ? true : !selectableMask[i];
         for (let i = 0; i < diceClicks.length && i < selectableMask.length; i++) {
-            //diceClicks[i].firstElementChild.disabled = diceClicks[i].hidden ? true : !selectableMask[i];
             diceClicks[i].firstElementChild.classList.toggle('disabled', !selectableMask[i]); 
         }
     }
@@ -111,7 +97,56 @@ export default class c_UIRenderer {
         if (this.containerTotalScore) this.containerTotalScore.textContent = String(totalScore);
     }
 
-    _setMessage(textMessage) {
-        if (this.containerMessage) this.containerMessage.textContent = textMessage;
+    // INFO ONLY → bottom message box
+    _setMessage(text) {
+        this._lastMessage = text || "";
+        this._renderMessageBox();
+    }
+
+    _showHelpBubbleNearEvent(evt, text) {
+        const bubble = document.getElementById("message");
+        if (!bubble) return;
+
+        bubble.textContent = text;
+        bubble.classList.remove("hidden");
+        bubble.classList.add("visible");
+
+        const outsideClick = (e) => {
+            const rect = bubble.getBoundingClientRect();
+            const tol = 0.011;
+            const inside =
+                e.clientX >= rect.left - rect.width * tol &&
+                e.clientX <= rect.right + rect.width * tol &&
+                e.clientY >= rect.top - rect.height * tol &&
+                e.clientY <= rect.bottom + rect.height * tol;
+            if (!inside) this._hideHelpBubble();
+        };
+        setTimeout(() => {
+            document.addEventListener("mousedown", outsideClick, { once: true });
+        }, 50);
+    }
+
+    _hideHelpBubble() {
+        const bubble = document.getElementById("message");
+        if (!bubble) return;
+        bubble.classList.remove("visible");
+        bubble.classList.add("hidden");
+    }
+
+    _renderMessageBox() {
+        if (!this.showInfoBox) return;
+        const box = this.containerMessage || document.getElementById("message");
+        if (!box) return;
+
+        const msg = (this._lastMessage || "").trim();
+        box.textContent = msg;
+
+        if (msg) {
+            box.classList.remove("hidden");
+            box.classList.add("visible");
+        } else {
+            box.classList.remove("visible");
+            box.classList.add("hidden");
+        }
     }
 }

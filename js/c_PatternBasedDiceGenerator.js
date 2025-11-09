@@ -159,4 +159,8 @@ export default class c_PatternBasedDiceGenerator {
         const result = this.classifierInstance._classifyRoll(diceValues);
         return { diceValues, patternKey: result.patternKey, score: result.score };
     }
+
+    roll() { 
+        return this._rollSixDiceWeighted(); 
+    }
 }

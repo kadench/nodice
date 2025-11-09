@@ -21,6 +21,11 @@ export default class c_DiceRunGame {
         this.totalScore = 0;
         this.hasRolledAtLeastOnce = false;
 
+        this.mustBankBeforeReroll = false;
+        this.endTurnConfirmPending = false;
+        this.firstTurnQualified = false;
+        this.firstRunThreshold = (DICE_SCORES.first_run_min ?? 3);
+
         this.generator = null;
 
         this._initialize();
@@ -52,37 +57,43 @@ export default class c_DiceRunGame {
         }
     }
 
-    _onRoll() {
-        if (this.bankedDiceMask.every(Boolean)) {
-            this.bankedDiceMask = [false, false, false, false, false, false];
+    _onRoll(evt) {
+        if (this.hasRolledAtLeastOnce && this.mustBankBeforeReroll) {
+            this.ui?._showHelpBubbleNearEvent?.(evt, "You must bank at least one scoring die before rolling again.");
+            return;
         }
+        if (this.bankedDiceMask.every(Boolean))
+            this.bankedDiceMask = [false,false,false,false,false,false];
 
-        // Produce a 6-die roll; copy sequentially into unbanked positions
-        const resultObject = this.generator._rollSixDiceWeighted();
-        const rolled = resultObject.diceValues.slice();
-        let copyIndex = 0;
+        const resultObject = (this.generator.roll
+            ? this.generator.roll()
+            : this.generator._rollSixDiceWeighted());
+
+        const rolled = resultObject.diceValues.slice(); // number of unbanked dice
+        let j = 0;
         for (let i = 0; i < 6; i++) {
-            if (!this.bankedDiceMask[i]) this.latestDiceValues[i] = rolled[copyIndex++];
+            if (!this.bankedDiceMask[i]) this.latestDiceValues[i] = rolled[j++];
         }
 
         this.hasRolledAtLeastOnce = true;
-        this.selectedDiceMask = [false, false, false, false, false, false];
+        this.selectedDiceMask = [false,false,false,false,false,false];
 
-        // Farkle detection
         const selectableMask = this._computeSelectableMaskConsideringBanked();
         if (!this._anyTrue(selectableMask)) {
-            // Farkle! End run, reset runScore, show message, end turn
-            this.runScore = 0;
             this.currentRollScore = 0;
-            this.selectedDiceMask = [false, false, false, false, false, false];
-            this.bankedDiceMask = [false, false, false, false, false, false];
-            this.hasRolledAtLeastOnce = false;
-            this._refreshUI(resultObject.patternKey, resultObject.score, "Farkle! No scoring dice. Turn ended.");
+            this.runScore = 0;
+            this.mustBankBeforeReroll = false;
+            this.endTurnConfirmPending = false;
+            this._refreshUI(resultObject.patternKey, resultObject.score, "Farkle. Turn ends.");
+            this._onEndTurn(evt);
             return;
         }
 
+        this.mustBankBeforeReroll = true;
+        this.endTurnConfirmPending = false;
         this._refreshUI(resultObject.patternKey, resultObject.score);
     }
+
 
     _onToggleSelectDie(dieIndex) {
         if (!this.hasRolledAtLeastOnce) return;
@@ -129,34 +140,56 @@ _onSelectAllAvailable() {
     this._refreshUI(undefined, undefined, newSelectState ? "All available dice selected." : "All available dice deselected.");
 }
 
-    _onBank() {
+    _onBank(evt) {
         if (!this.hasRolledAtLeastOnce) return;
-
         if (this.currentRollScore <= 0) {
-            this.ui._setMessage("Select scoring dice before banking.");
+            this.ui?._showHelpBubbleNearEvent?.(evt, "Select scoring dice before banking.");
             return;
         }
 
-        for (let i = 0; i < 6; i++) {
-            if (this.selectedDiceMask[i]) this.bankedDiceMask[i] = true;
-        }
+        for (let i = 0; i < 6; i++) if (this.selectedDiceMask[i]) this.bankedDiceMask[i] = true;
 
         this.runScore += this.currentRollScore;
         this.currentRollScore = 0;
-        this.selectedDiceMask = [false, false, false, false, false, false];
+        this.selectedDiceMask = [false,false,false,false,false,false];
+        this.mustBankBeforeReroll = false;
+        this.endTurnConfirmPending = false;
 
         this._refreshUI(undefined, undefined, "Banked. Roll or End Turn.");
     }
 
-    _onEndTurn() {
+    _onEndTurn(evt) {
         if (!this.hasRolledAtLeastOnce) return;
 
-        this.totalScore += this.runScore;
+        const base = (this.firstRunThreshold ?? (DICE_SCORES.first_run_min ?? 300));
+        if (this.firstRunThreshold == null) this.firstRunThreshold = base;
+
+        const needMin = (this.totalScore === 0 && !this.firstTurnQualified);
+        if (needMin && this.runScore < base) {
+            if (!this.endTurnConfirmPending) {
+            const canStill = this._anyTrue(this._computeSelectableMaskConsideringBanked());
+            const msg = canStill
+                ? `You need at least ${base} on your first scoring turn before ending. Bank more or roll. Click again to pass.`
+                : `You haven't reached ${base} yet; ending will pass. Click again to confirm.`;
+            this.ui?._showHelpBubbleNearEvent?.(evt, msg);
+            this.endTurnConfirmPending = true;
+            return;
+            }
+            this.runScore = 0; // pass
+            this.endTurnConfirmPending = false;
+        } else {
+            this.totalScore += this.runScore;
+            if (this.totalScore > 0) this.firstTurnQualified = true;
+        }
+
         this.runScore = 0;
         this.currentRollScore = 0;
-        this.bankedDiceMask = [false, false, false, false, false, false];
-        this.selectedDiceMask = [false, false, false, false, false, false];
+        this.bankedDiceMask = [false,false,false,false,false,false];
+        this.selectedDiceMask = [false,false,false,false,false,false];
         this.hasRolledAtLeastOnce = false;
+        this.mustBankBeforeReroll = false;
+        this.endTurnConfirmPending = false;
+
         this._refreshUI(undefined, undefined, "Turn ended. Total updated.");
     }
 
@@ -167,9 +200,9 @@ _onSelectAllAvailable() {
     }
 
     _computeSelectableMaskConsideringBanked() {
-        const mask = this.selectionManager._getSelectableDiceMask(this.latestDiceValues);
-        for (let i = 0; i < 6; i++) if (this.bankedDiceMask[i]) mask[i] = false;
-        return mask;
+        const vals = Array.isArray(this.latestDiceValues) ? this.latestDiceValues : [0,0,0,0,0,0];
+        const bank = Array.isArray(this.bankedDiceMask) ? this.bankedDiceMask : [false,false,false,false,false,false];
+        return this.selectionManager._getSelectableDiceMask(vals, bank);
     }
 
     _anyTrue(arr) {
