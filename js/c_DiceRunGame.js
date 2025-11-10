@@ -4,6 +4,7 @@ import c_DiceProbabilityModel from "./c_DiceProbabilityModel.js";
 import c_PatternBasedDiceGenerator from "./c_PatternBasedDiceGenerator.js";
 import c_SelectionManager from "./c_SelectionManager.js";
 import c_UIRenderer from "./c_UIRenderer.js";
+import c_AudioHandler from "./c_AudioHandler.js";
 
 export default class c_DiceRunGame {
     constructor() {
@@ -27,6 +28,7 @@ export default class c_DiceRunGame {
         this.firstRunThreshold = (DICE_SCORES.first_run_min ?? 3);
 
         this.generator = null;
+        this.audio = null;
 
         this._initialize();
         this._wireUIEvents();
@@ -35,8 +37,22 @@ export default class c_DiceRunGame {
     _initialize() {
         this.ui._setMessage("Computing probabilities…");
         this.probabilityModel._initialize();
-        this.generator = new c_PatternBasedDiceGenerator(this.classifier, this.probabilityModel.DICE_ROLLS);
-        if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
+        this.generator = new c_PatternBasedDiceGenerator(
+            this.classifier,
+            this.probabilityModel.DICE_ROLLS
+        );
+        if (this.ui.buttonEndTurn) {
+            this.ui.buttonEndTurn.textContent = "End Turn";
+        }
+
+        // Universal audio system
+        this.audio = new c_AudioHandler({
+            base: "assets/audio/game/sfx/",
+            volume: 0.8,
+            bias: 2,
+            historySizeFactor: 2
+        });
+        this.ui._bindAudioHandler?.(this.audio);
 
         this.ui._setMessage('Ready. Press "Roll" to begin.');
         this._refreshUI();
@@ -58,92 +74,139 @@ export default class c_DiceRunGame {
     }
 
     _onRoll(evt) {
-        if (this.hasRolledAtLeastOnce && this.mustBankBeforeReroll) {
-            this.ui?._showHelpBubbleNearEvent?.(evt, "You must bank at least one scoring die before rolling again.");
-            return;
+        if (!this.hasRolledAtLeastOnce) {
+            this.mustBankBeforeReroll = false; // first roll should never be blocked
         }
+
+        if (this.hasRolledAtLeastOnce && this.mustBankBeforeReroll) {
+            const allBanked = this.bankedDiceMask && this.bankedDiceMask.every(Boolean); // hot dice if true
+            const preSelectableMask = this._computeSelectableMaskConsideringBanked();
+            const anySelectable = this._anyTrue(preSelectableMask);
+
+            if (!anySelectable) {
+                // else. farkle if there are dice on the table that are not banked.
+                // if ALL dice are banked that's hot dice (allow roll).
+                if (!allBanked) {
+                    this.currentRollScore = 0;
+                    this.runScore = 0;
+                    this.mustBankBeforeReroll = false;
+                    this.endTurnConfirmPending = false;
+                    this.audio?._playSfx("noDice");
+                    this.audio?._playSfx("failed");
+                    this._refreshUI(undefined, 0, "Farkle. Turn ends.");
+                    this._onEndTurn(evt);
+                    return;
+                }
+                // hot dice: fall through and allow roll (optional sting)
+                this.audio?._playSfx("hotDice");
+            } else {
+                // something selectable → must bank first
+                this.ui?._showHelpBubbleNearEvent?.(evt, "You must bank at least one scoring die before rolling again.");
+                this.audio?._playSfx("notAllowed");
+                return;
+            }
+        }
+
         if (this.bankedDiceMask.every(Boolean))
-            this.bankedDiceMask = [false,false,false,false,false,false];
+            this.bankedDiceMask = [false, false, false, false, false, false];
 
         const resultObject = (this.generator.roll
             ? this.generator.roll()
             : this.generator._rollSixDiceWeighted());
 
-        const rolled = resultObject.diceValues.slice(); // number of unbanked dice
+        const rolled = resultObject.diceValues.slice();
         let j = 0;
         for (let i = 0; i < 6; i++) {
-            if (!this.bankedDiceMask[i]) this.latestDiceValues[i] = rolled[j++];
+            if (!this.bankedDiceMask[i]) {
+                this.latestDiceValues[i] = rolled[j++];
+            }
         }
 
         this.hasRolledAtLeastOnce = true;
-        this.selectedDiceMask = [false,false,false,false,false,false];
+        this.selectedDiceMask = [false, false, false, false, false, false];
 
         const selectableMask = this._computeSelectableMaskConsideringBanked();
         if (!this._anyTrue(selectableMask)) {
+            // post-roll dead roll (farkle)
             this.currentRollScore = 0;
             this.runScore = 0;
             this.mustBankBeforeReroll = false;
             this.endTurnConfirmPending = false;
+            this.audio?._playSfx("noDice");
+            this.audio?._playSfx("failed");
             this._refreshUI(resultObject.patternKey, resultObject.score, "Farkle. Turn ends.");
             this._onEndTurn(evt);
             return;
         }
+
+        // Successful roll (something selectable exists)
+        this.audio?._playSfx("diceRoll");
+        this.audio?._playSfx("successful");
 
         this.mustBankBeforeReroll = true;
         this.endTurnConfirmPending = false;
         this._refreshUI(resultObject.patternKey, resultObject.score);
     }
 
-
     _onToggleSelectDie(dieIndex) {
         if (!this.hasRolledAtLeastOnce) return;
 
         const selectableMask = this._computeSelectableMaskConsideringBanked();
-        if (this.bankedDiceMask[dieIndex]) return;
-        if (!selectableMask[dieIndex]) return;
+        if (this.bankedDiceMask[dieIndex]) {
+            this.audio?._playSfx("disabled");
+            return;
+        }
+        if (!selectableMask[dieIndex]) {
+            this.audio?._playSfx("notAllowed");
+            return;
+        }
 
         this.selectedDiceMask[dieIndex] = !this.selectedDiceMask[dieIndex];
         this._recomputeSelectedScore();
+        this.audio?._playSfx("buttonClick");
         this._refreshUI();
     }
 
-_onSelectAllAvailable() {
-    if (!this.hasRolledAtLeastOnce) return;
+    _onSelectAllAvailable() {
+        if (!this.hasRolledAtLeastOnce) return;
 
-    const selectableMask = this._computeSelectableMaskConsideringBanked();
-   
-    // Check if all selectable dice are already selected
-    const allSelectableSelected = selectableMask.every(
-        (val, i) => !val || this.selectedDiceMask[i]
-    );
+        const selectableMask = this._computeSelectableMaskConsideringBanked();
 
-    // Toggle: if all selectable dice are already selected, deselect them
-    const newSelectState = !allSelectableSelected;
+        // Check if all selectable dice are already selected
+        const allSelectableSelected = selectableMask.every(
+            (val, i) => !val || this.selectedDiceMask[i]
+        );
 
-    let changed = false;
-    for (let i = 0; i < 6; i++) {
-        if (selectableMask[i]) {
-            this.selectedDiceMask[i] = newSelectState;
-            changed = true;
-        } else {
-            // Non-selectable dice remain untouched
-            this.selectedDiceMask[i] = this.selectedDiceMask[i] && selectableMask[i];
+        // Toggle: if all selectable dice are already selected, deselect them
+        const newSelectState = !allSelectableSelected;
+
+        let changed = false;
+        for (let i = 0; i < 6; i++) {
+            if (selectableMask[i]) {
+                this.selectedDiceMask[i] = newSelectState;
+                changed = true;
+            } else {
+                // Non-selectable dice remain untouched
+                this.selectedDiceMask[i] = this.selectedDiceMask[i] && selectableMask[i];
+            }
         }
-    }
 
-    if (!changed) {
-        this.ui._setMessage("No selectable dice right now.");
-        return;
-    }
+        if (!changed) {
+            this.ui._setMessage("No selectable dice right now.");
+            this.audio?._playSfx("disabled");
+            return;
+        }
 
-    this._recomputeSelectedScore();
-    this._refreshUI(undefined, undefined, newSelectState ? "All available dice selected." : "All available dice deselected.");
-}
+        this._recomputeSelectedScore();
+        this.audio?._playSfx("buttonClick");
+        this._refreshUI(undefined, undefined, newSelectState ? "All available dice selected." : "All available dice deselected.");
+    }
 
     _onBank(evt) {
         if (!this.hasRolledAtLeastOnce) return;
         if (this.currentRollScore <= 0) {
             this.ui?._showHelpBubbleNearEvent?.(evt, "Select scoring dice before banking.");
+            this.audio?._playSfx("notAllowed");
             return;
         }
 
@@ -151,10 +214,11 @@ _onSelectAllAvailable() {
 
         this.runScore += this.currentRollScore;
         this.currentRollScore = 0;
-        this.selectedDiceMask = [false,false,false,false,false,false];
+        this.selectedDiceMask = [false, false, false, false, false, false];
         this.mustBankBeforeReroll = false;
         this.endTurnConfirmPending = false;
 
+        this.audio?._playSfx("buttonClick");
         this._refreshUI(undefined, undefined, "Banked. Roll or End Turn.");
     }
 
@@ -167,25 +231,32 @@ _onSelectAllAvailable() {
         const needMin = (this.totalScore === 0 && !this.firstTurnQualified);
         if (needMin && this.runScore < base) {
             if (!this.endTurnConfirmPending) {
-            const canStill = this._anyTrue(this._computeSelectableMaskConsideringBanked());
-            const msg = canStill
-                ? `You need at least ${base} on your first scoring turn before ending. Bank more or roll. Click again to pass.`
-                : `You haven't reached ${base} yet; ending will pass. Click again to confirm.`;
-            this.ui?._showHelpBubbleNearEvent?.(evt, msg);
-            this.endTurnConfirmPending = true;
-            return;
+                const canStill = this._anyTrue(this._computeSelectableMaskConsideringBanked());
+                const msg = canStill
+                    ? `You need at least ${base} on your first scoring turn before ending. Bank more or roll. Click again to pass.`
+                    : `You haven't reached ${base} yet; ending will pass. Click again to confirm.`;
+                this.ui?._showHelpBubbleNearEvent?.(evt, msg);
+                this.audio?._playSfx("notAllowed");
+                this.endTurnConfirmPending = true;
+                return;
             }
             this.runScore = 0; // pass
             this.endTurnConfirmPending = false;
+            this.audio?._playSfx("buttonClick");
         } else {
             this.totalScore += this.runScore;
             if (this.totalScore > 0) this.firstTurnQualified = true;
+            if (this.runScore > 0) {
+                this.audio?._playSfx("celebration");
+            } else {
+                this.audio?._playSfx("buttonClick");
+            }
         }
 
         this.runScore = 0;
         this.currentRollScore = 0;
-        this.bankedDiceMask = [false,false,false,false,false,false];
-        this.selectedDiceMask = [false,false,false,false,false,false];
+        this.bankedDiceMask = [false, false, false, false, false, false];
+        this.selectedDiceMask = [false, false, false, false, false, false];
         this.hasRolledAtLeastOnce = false;
         this.mustBankBeforeReroll = false;
         this.endTurnConfirmPending = false;
@@ -200,8 +271,8 @@ _onSelectAllAvailable() {
     }
 
     _computeSelectableMaskConsideringBanked() {
-        const vals = Array.isArray(this.latestDiceValues) ? this.latestDiceValues : [0,0,0,0,0,0];
-        const bank = Array.isArray(this.bankedDiceMask) ? this.bankedDiceMask : [false,false,false,false,false,false];
+        const vals = Array.isArray(this.latestDiceValues) ? this.latestDiceValues : [0, 0, 0, 0, 0, 0];
+        const bank = Array.isArray(this.bankedDiceMask) ? this.bankedDiceMask : [false, false, false, false, false, false];
         return this.selectionManager._getSelectableDiceMask(vals, bank);
     }
 
@@ -219,23 +290,17 @@ _onSelectAllAvailable() {
             if (this.ui.buttonBank) this.ui.buttonBank.disabled = true;
             if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
             if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = true;
-        } 
-        // DOESN'T WORK RIGHT NOW
-        // if (this.bankedDiceMask.every(v => v === false)) {
-        //     if (this.ui.buttonEndTurn) { this.ui.buttonEndTurn.textContent = "Pass"; }
-        // }
-
-        else {
-        if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
-        if (this.ui.buttonBank) this.ui.buttonBank.disabled = this.currentRollScore <= 0;
-        if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
-        if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = !this._anyTrue(selectableMask);
-        if (this.ui.buttonEndTurn) {this.ui.buttonEndTurn.textContent = "End Turn";}
-        if (this.ui.buttonSelectAll) {
-            const allSelectableAlreadySelected = selectableMask.every((v, i) => !v || this.selectedDiceMask[i]);
-            this.ui.buttonSelectAll.textContent = allSelectableAlreadySelected ? "Deselect All" : "Select All";
+        } else {
+            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
+            if (this.ui.buttonBank) this.ui.buttonBank.disabled = this.currentRollScore <= 0;
+            if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
+            if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = !this._anyTrue(selectableMask);
+            if (this.ui.buttonEndTurn) { this.ui.buttonEndTurn.textContent = "End Turn"; }
+            if (this.ui.buttonSelectAll) {
+                const allSelectableAlreadySelected = selectableMask.every((v, i) => !v || this.selectedDiceMask[i]);
+                this.ui.buttonSelectAll.textContent = allSelectableAlreadySelected ? "Deselect All" : "Select All";
+            }
         }
-    }
 
         this.ui._applyDiceEnabledMask(selectableMask);
         this.ui._renderDiceLabels(this.latestDiceValues, this.selectedDiceMask, this.bankedDiceMask);

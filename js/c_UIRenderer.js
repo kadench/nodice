@@ -44,11 +44,6 @@ export default class c_UIRenderer {
     _updateActionButtons({ hasRolledAtLeastOnce, selectableMask, selectedMask, bankedMask }) {
         const isHotDice = bankedMask && bankedMask.length === 6 && bankedMask.every(Boolean);
 
-        // --- Roll ---
-        if (this.buttonRoll) {
-            this.buttonRoll.disabled = false; // can always roll
-        }
-
         // --- Bank ---
         if (this.buttonBank) {
             const anySelected = Array.isArray(selectedMask) && selectedMask.some(Boolean);
@@ -62,7 +57,7 @@ export default class c_UIRenderer {
                 this.buttonEndTurn.disabled = false;
             } else {
                 this.buttonEndTurn.textContent = "End Turn";
-                this.buttonEndTurn.disabled = !!isHotDice;
+                this.buttonEndTurn.disabled = isHotDice;
             }
         }
 
