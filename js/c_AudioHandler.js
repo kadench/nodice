@@ -5,23 +5,21 @@
 export default class c_AudioHandler {
     constructor(opts = {}) {
         this.enabled = opts.enabled ?? true;
-        this.volume = clamp01(opts.volume ?? 0.7);
+        this.volume = clamp01(opts.volume ?? 3);
         this.base = opts.base ?? "assets/audio/game/sfx/";
         this.bias = opts.bias ?? 2;
         this.historySizeFactor = opts.historySizeFactor ?? 2;
 
         // 3 variants each by default; diceRoll has 5
         this._registry = {
-            buttonClick:   { prefix: "ui/reaction",count: 3 },
-            successful:    { prefix: "rollsuccess", count: 3 },
-            failed:        { prefix: "rollfail",count: 3 },
+            buttonClick:   { prefix: "ui/reaction/click",count: 3 },
+            successful:    { prefix: "dice/rollsuccess", count: 5 },
             disabled:      { prefix: "disabled", count: 3 },
-            notAllowed:    { prefix: "notallowed",count: 3 },
+            notAllowed:    { prefix: "ui/warning/warning",count: 3},
             celebration:   { prefix: "celebration", count: 3 },
             noDice:        { prefix: "dice/nodice", count: 3 }, // farkle
             hotDice:       { prefix: "hotdice", count: 3 },
             diceRoll:      { prefix: "dice/diceroll", count: 5 }, // diceroll1..5
-            uiWarning:     { prefix: "ui/warning", count: 3}
         };
 
         this._history = Object.create(null);       // per-type variant history
@@ -46,13 +44,11 @@ export default class c_AudioHandler {
     _variedDiceRoll()         { this._playSfx("diceRoll"); }
     _buttonClick()            { this._playSfx("buttonClick"); }
     _successfulDiceRoll()     { this._playSfx("successful"); }
-    _failedDiceRoll()         { this._playSfx("failed"); }
     _disabled()               { this._playSfx("disabled"); }
     _notAllowed()             { this._playSfx("notAllowed"); }
     _celebration()            { this._playSfx("celebration"); }
     _noDice()                 { this._playSfx("noDice"); }
     _hotDice()                { this._playSfx("hotDice"); }
-    _uiWarning()              { this._playSfx("uiWarning"); }
 
     _pickVariant(type, count) {
         const hist = this._history[type] ?? (this._history[type] = []);

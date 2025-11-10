@@ -92,7 +92,7 @@ export default class c_DiceRunGame {
                     this.mustBankBeforeReroll = false;
                     this.endTurnConfirmPending = false;
                     this.audio?._playSfx("noDice");
-                    this.audio?._playSfx("failed");
+                    this.ui?.buttonRoll.disabled;
                     this._refreshUI(undefined, 0, "Farkle. Turn ends.");
                     this._onEndTurn(evt);
                     return;
@@ -133,7 +133,6 @@ export default class c_DiceRunGame {
             this.mustBankBeforeReroll = false;
             this.endTurnConfirmPending = false;
             this.audio?._playSfx("noDice");
-            this.audio?._playSfx("failed");
             this._refreshUI(resultObject.patternKey, resultObject.score, "Farkle. Turn ends.");
             this._onEndTurn(evt);
             return;
@@ -223,6 +222,7 @@ export default class c_DiceRunGame {
     }
 
     _onEndTurn(evt) {
+        this.audio?._playSfx("buttonClick")
         if (!this.hasRolledAtLeastOnce) return;
 
         const base = (this.firstRunThreshold ?? (DICE_SCORES.first_run_min ?? 300));
@@ -236,20 +236,17 @@ export default class c_DiceRunGame {
                     ? `You need at least ${base} on your first scoring turn before ending. Bank more or roll. Click again to pass.`
                     : `You haven't reached ${base} yet; ending will pass. Click again to confirm.`;
                 this.ui?._showHelpBubbleNearEvent?.(evt, msg);
-                this.audio?._playSfx("notAllowed");
+                this.audio?._playSfx("noDice");
                 this.endTurnConfirmPending = true;
                 return;
             }
             this.runScore = 0; // pass
             this.endTurnConfirmPending = false;
-            this.audio?._playSfx("buttonClick");
         } else {
             this.totalScore += this.runScore;
             if (this.totalScore > 0) this.firstTurnQualified = true;
             if (this.runScore > 0) {
                 this.audio?._playSfx("celebration");
-            } else {
-                this.audio?._playSfx("buttonClick");
             }
         }
 
@@ -286,7 +283,7 @@ export default class c_DiceRunGame {
 
         if (!this.hasRolledAtLeastOnce) {
             selectableMask = [false, false, false, false, false, false];
-            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = false;
+            if (this.ui.buttonRoll) this.ui.buttonRoll.disabled = this._anyTrue(selectableMask);
             if (this.ui.buttonBank) this.ui.buttonBank.disabled = true;
             if (this.ui.buttonEndTurn) this.ui.buttonEndTurn.disabled = false;
             if (this.ui.buttonSelectAll) this.ui.buttonSelectAll.disabled = true;

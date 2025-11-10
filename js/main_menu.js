@@ -1,4 +1,4 @@
-//Slice and Dice by Kaden Hansen
+//SLight Breeze by Kaden Hansen
 //License: All Rights Reserved ©
 
 //Paperback by Bensound.com
@@ -6,8 +6,8 @@
 //Artist: : Diffie Bosman
 
 
-// === Audio setup ===
-const entrance = new Audio("assets/audio/music/nodice_theme.wav");
+// === Audio setup === NOT WRITTEN YET
+const entrance = new Audio("assets/audio/music/slight_breeze.wav");
 
 // Menu music playlist
 const playlist = [
