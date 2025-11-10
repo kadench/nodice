@@ -139,8 +139,12 @@ export default class c_DiceRunGame {
         }
 
         // Successful roll (something selectable exists)
+        const selectableMaskAmount = selectableMask
+        .map((val, idx) => (val === true ? idx : null))
+        .filter(idx => idx !== null);
+
         this.audio?._playSfx("diceRoll");
-        this.audio?._playSfx("successful");
+        this.audio?._playDiceSuccessForSelectable(selectableMaskAmount.length);
 
         this.mustBankBeforeReroll = true;
         this.endTurnConfirmPending = false;
@@ -233,10 +237,10 @@ export default class c_DiceRunGame {
             if (!this.endTurnConfirmPending) {
                 const canStill = this._anyTrue(this._computeSelectableMaskConsideringBanked());
                 const msg = canStill
-                    ? `You need at least ${base} on your first scoring turn before ending. Bank more or roll. Click again to pass.`
+                    ? `You need at least ${base} on your first scoring turn to keep your score, however, you've NoDiced Click again to pass.`
                     : `You haven't reached ${base} yet; ending will pass. Click again to confirm.`;
                 this.ui?._showHelpBubbleNearEvent?.(evt, msg);
-                this.audio?._playSfx("noDice");
+                this.audio?._playSfx("notAllowed");
                 this.endTurnConfirmPending = true;
                 return;
             }

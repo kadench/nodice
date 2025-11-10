@@ -13,7 +13,7 @@ export default class c_AudioHandler {
         // 3 variants each by default; diceRoll has 5
         this._registry = {
             buttonClick:   { prefix: "ui/reaction/click",count: 3 },
-            successful:    { prefix: "dice/rollsuccess", count: 5 },
+            successful:    { prefix: "dice/rollsuccess", count: 6 },
             disabled:      { prefix: "disabled", count: 3 },
             notAllowed:    { prefix: "ui/warning/warning",count: 3},
             celebration:   { prefix: "celebration", count: 3 },
@@ -49,6 +49,19 @@ export default class c_AudioHandler {
     _celebration()            { this._playSfx("celebration"); }
     _noDice()                 { this._playSfx("noDice"); }
     _hotDice()                { this._playSfx("hotDice"); }
+
+    _playDiceSuccessForSelectable(selectableCount) {
+        if (!this._hasAudio() || !this.enabled) return;
+        let n = Number(selectableCount);
+        if (!Number.isFinite(n)) return;
+        n = Math.max(1, Math.min(5, Math.floor(n)));
+        if (n > 1 && Math.random() < .34) n = n - 1;
+        const url = this._pickUrl(`dice/rollsuccess${n}`);
+        const a = new Audio(url);
+        a.volume = this.volume;
+        const p = a.play?.();
+        if (p && typeof p.catch === "function") p.catch(() => {});
+    }
 
     _pickVariant(type, count) {
         const hist = this._history[type] ?? (this._history[type] = []);

@@ -5,7 +5,7 @@ window.addEventListener("DOMContentLoaded", () => {
     // Menu music playlist
     // Each track can have an optional volume property (0.0–1.0)
     const playlist = [
-        { src: "assets/audio/music/paperback.mp3", volume: 0.3 },
+        { src: "assets/audio/music/paperback.mp3", volume: 0.2 },
     ];
 
     // Shuffle helper
