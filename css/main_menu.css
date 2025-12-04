@@ -1,602 +1,184 @@
 :root {
-  --fade-duration: 9.8s;
-  --stage-padding-top: 28px;
-  --bg: linear-gradient(135deg, var(--carolina-blue), var(--hot-pink), var(--vermilion));
-  --fg: #fff;
-  --default_font_family: "Comic Sans MS", "Comic Sans", sans-serif;
-  --shadow: 0 12px 30px rgba(0,0,0,0.45);
-  --overlay-alpha: 0.88;
-
-  /* Colors */
-  --dun: #d6cbb7ff;
-  --carolina-blue: #7bb4d3ff;
-  --charcoal: #344055ff;
-  --hot-pink: #f564a9ff;
-  --vermilion: #f24236ff;
-
-  /* HSL copies */
-  --dun: hsla(39, 27%, 78%, 1);
-  --carolina-blue: hsla(201, 50%, 65%, 1);
-  --charcoal: hsla(218, 24%, 27%, 1);
-  --hot-pink: hsla(331, 88%, 68%, 1);
-  --vermilion: hsla(4, 88%, 58%, 1);
-
-  /* UI chrome palette */
-  --ui-light: #f2f2f2;
-  --ui-mid: #9db6c4;
-  --ui-dark: #274a5a;
-  --ui-gloss1: #86a2af;
-  --ui-gloss2: #0f8dc7;
+    /* reuse game colors (copied from style.css, kept simple) */
+    --dun: #d6cbb7ff;
+    --carolina-blue: #7bb4d3ff;
+    --charcoal: #344055ff;
+    --hot-pink: #f564a9ff;
+    --vermilion: #f24236ff;
 }
 
+/* basic reset-ish */
 * {
-  font-family: var(--default_font_family);
+    box-sizing: border-box;
 }
 
-html, body {
-  height: 100%;
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  overflow: hidden;
+body {
+    background: linear-gradient(135deg, var(--carolina-blue), var(--hot-pink), var(--vermilion));
+    background-repeat: no-repeat;
+    background-size: cover;
+    color: var(--charcoal);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    height: 100vh;
+    margin: 0;
+    overflow: hidden;
 }
 
-.stage {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  transition: padding-top 400ms ease, transform 400ms ease;
+/* prevent background scrolling when modal is open */
+body.modal-open {
+    overflow: hidden;
 }
 
-/* Docked positioning */
-body.docked .stage {
-  justify-content: flex-start;
-  padding-top: var(--stage-padding-top);
+#main-menu {
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px 16px;
 }
 
-/* === Logo === */
-.logo {
-  opacity: 0;
-  width: min(80vw, 1200px);
-  height: auto;
-  transition:
-    opacity var(--fade-duration) ease,
-    width 500ms ease;
+/* simple heading similar vibe */
+#menu-title {
+    margin-top: 24px;
+    margin-bottom: 12px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 
-.logo.fade-in { opacity: 1; }
-.is-hidden { opacity: 0; }
-
-.logo.instant {
-  transition: none !important;
-  opacity: 1 !important;
+#menu-desc {
+    margin-bottom: 18px;
 }
 
-/* Shrinks and animates after docking */
-body.docked .logo {
-  width: min(40vw, 600px);
-  animation:
-    dock-bounce 0.3s ease-out 1,
-    bob 5s ease-in-out 0.3s infinite;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+#menu-form {
+    background: rgba(255,255,255,0.9);
+    border-radius: 10px;
+    padding: 16px 18px 20px;
+    display: inline-block;
+    text-align: left;
+    min-width: 260px;
 }
 
-@keyframes dock-bounce {
-  0% { transform: translateY(0); }
-  45% { transform: translateY(-12px); }
-  100% { transform: translateY(0); }
+/* labels & input */
+label[for="player-count"] {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
 }
 
-@keyframes bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+#player-count {
+    width: 100%;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: 1px solid #aaa;
+    font-size: 1rem;
+    margin-bottom: 14px;
 }
 
-/* Hide everything until ready */
-body:not(.ready) .stage > :not(#logo) {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 400ms ease;
-}
-body.ready .stage > :not(#logo) {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* === Options layout === */
-.options {
-  display: none;
-  margin-top: 24px;
-  gap: 14px;
-}
-body.docked .options {
-  display: grid;
-  grid-auto-rows: minmax(44px, auto);
+/* buttons: copy spirit of style.css (simple) */
+button {
+    margin-bottom: 1%;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 1px solid #222;
+    background-color: #f5f5f5;
+    font-weight: 600;
 }
 
-/* === Buttons: 90s chrome unified look === */
-.btn-base,
-section#options > .btn-base {
-  border: 6px solid var(--ui-light);
-  border-top-color: #ffffff;
-  border-left-color: #dfe8ec;
-  border-right-color: #5c7a8a;
-  border-bottom-color: #2b4654;
-  border-radius: 18px 22px 16px 24px / 18px 20px 22px 16px;
-  padding: 1rem 2.8rem;
-  margin: 0.5rem;
-  font-weight: 1000;
-  font-size: clamp(1.2rem, 4vw, 1.8rem);
-  letter-spacing: 0.02em;
-  color: var(--ui-light);
-  text-transform: uppercase;
-  cursor: pointer;
-  transform: translateZ(0) translateY(0);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-position 0.25s ease;
-
-  background:
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px);
-  background-size: 200% 200%, 200% 200%;
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 8px 0 #0a3442,
-    0 18px 28px rgba(0,0,0,0.35);
-  animation: pulse 2800ms ease-in-out infinite;
+button:hover {
+    cursor: pointer;
 }
 
-a {
-text-decoration: none;
-color: #f2f2f2;
-display: flex;
-flex-grow: 1;
-
+.controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
 }
 
-.btn-base:hover,
-section#options > .btn-base:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 0 0 2px #ffffff30,
-    0 10px 0 #0a3442,
-    0 22px 32px rgba(0,0,0,0.45);
-  animation-duration: 3200ms;
+/* crude selected style if ever used */
+button.selected {
+    background-color: #39b93996;
+    border: 3px solid black;
 }
 
-.btn-base:active,
-section#options > .btn-base:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 6px 0 #0a3442,
-    0 16px 24px rgba(0,0,0,0.35);
+/* === Modal styling === */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+
+    /* ensure modal can provide its own scroll area when viewport is small/zoomed */
+    display: flex;
+    align-items: flex-start; /* keep dialog near top like a typical modal */
+    justify-content: center;
+    padding: 24px; /* spacing so dialog isn't flush to edges */
 }
 
-.btn-base:focus-visible {
-  outline: 4px dotted #00e5ff;
-  outline-offset: 3px;
+/* dark background only, no blur */
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5); /* just darker, no blur */
 }
 
-/* === Overlay === */
-.overlay {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgba(16, 24, 36, var(--overlay-alpha));
-  z-index: 10;
-}
-.overlay.hidden { display: none; }
+/* simple centered dialog, but allow internal scrolling if content exceeds viewport */
+.modal-dialog {
+    position: relative;
+    z-index: 1001;
+    max-width: 380px;
+    width: calc(100% - 48px); /* respect page padding */
+    background: rgba(255,255,255,0.95);
+    border-radius: 10px;
+    padding: 16px 18px 14px;
+    text-align: left;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.4);
 
-/* === 90s form controls === */
-.form-90s {
-  display: grid;
-  gap: 14px;
-  width: min(480px, 90vw);
-}
-
-.form-90s label {
-  font-weight: 800;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+    /* make dialog vertically scrollable if it's too tall for the viewport */
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* Shared base */
-.ctrl-90s {
-  appearance: none;
-  width: 100%;
-  font: inherit;
-  color: var(--ui-light);
-  padding: 0.85rem 1rem;
-  background:
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px);
-  border: 6px solid var(--ui-light);
-  border-top-color: #ffffff;
-  border-left-color: #dfe8ec;
-  border-right-color: #5c7a8a;
-  border-bottom-color: #2b4654;
-  border-radius: 18px 22px 16px 24px / 18px 20px 22px 16px;
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 8px 0 #0a3442,
-    0 18px 28px rgba(0,0,0,.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-position 0.2s ease;
-  background-size: 200% 200%;
+/* let the modal body flow normally, but keep spacing */
+.modal-body {
+    margin-bottom: 8px;
 }
 
-.ctrl-90s:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    inset 0 0 0 2px #ffffff30,
-    0 10px 0 #0a3442,
-    0 22px 32px rgba(0,0,0,.45);
+.modal-body p {
+    margin-top: 6px;
+    margin-bottom: 12px;
 }
 
-.ctrl-90s:focus-visible {
-  outline: 4px dotted #00e5ff;
-  outline-offset: 3px;
+.modal-actions {
+    text-align: right;
 }
 
-/* Select with readable text background */
-.select-90s {
-  --arrow-zone: 56px;
-  --text-plate: rgba(0,0,0,.35);
-  background-image:
-    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'><path fill='%23274a5a' d='M7 10l5 5 5-5z'/></svg>"),
-    linear-gradient(to bottom, #f2f2f2 0, #c9d7df 60%, #7a9aac 100%),
-    linear-gradient(var(--text-plate), var(--text-plate)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px),
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2));
-  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
-  background-size:
-    18px 18px,
-    42px 70%,
-    calc(100% - var(--arrow-zone)) 100%,
-    200% 200%,
-    200% 200%;
-  background-position:
-    right 1.15rem center,
-    right .5rem center,
-    left top,
-    0 0,
-    0 0;
-  padding-right: 3rem;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
+/* Ensure the HTML "hidden" attribute actually hides the modal (author CSS can override UA styles) */
+.modal[hidden] {
+  display: none !important;
 }
 
-/* === Make <option> items match the dropdown button background === */
-.select-90s::picker {
-  background: linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-              repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px,
-                                                rgba(0,0,0,.10) 6px 12px);
-  color: var(--ui-light);
-  font-family: var(--default_font_family);
-  font-weight: 700;
-  text-shadow: 0 1px 0 rgba(0,0,0,.25);
-  border: none;
+.options-tabs { display:flex; gap:8px; margin-bottom:10px; }
+.options-tabs .tab-btn {
+  padding:6px 10px;
+  border-radius:6px;
+  border:1px solid rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.04);
+  font-weight:600;
+}
+.options-tabs .tab-btn.active {
+  background: rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
 }
 
-/* Focus and hover inside the open dropdown (supported on modern Chromium/Firefox) */
-.select-90s option:focus,
-.select-90s option:hover,
-.select-90s option:checked {
-  background: linear-gradient(135deg, #3baadd, #27576d);
-  color: #ffffff;
-}
+.options-panel { margin-top:8px; }
 
-.select-90s::-ms-expand { display: none; }
-.select-90s {
-  -webkit-appearance: none;
-  appearance: none;
+.field-row {
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  align-items:center;
+  margin-bottom:8px;
 }
+.field-row label { flex:1; font-size:0.95rem; }
+.field-row input { width:110px; padding:6px 8px; border-radius:6px; border:1px solid #aaa; text-align:right; }
 
-/* Number input uniform */
-.number-90s::-webkit-outer-spin-button,
-.number-90s::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-.number-90s { -moz-appearance: textfield; appearance: textfield; }
-
-.number-90s:active {
-  transform: translateY(1px);
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 6px 0 #0a3442,
-    0 16px 24px rgba(0,0,0,.35);
-}
-
-.number-90s {
-  background-image:
-    linear-gradient(rgba(0,0,0,.25), rgba(0,0,0,.25)),
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px);
-  background-repeat: no-repeat, no-repeat, no-repeat;
-  background-size: 100% 100%, 200% 200%, 200% 200%;
-}
-
-/* === Animation === */
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(var(--pulse-scale)); }
-}
-
-/* =========================
-   Global prefs
-   ========================= */
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  .btn-base { animation: none !important; }
-  .logo { animation: none !important; }
-}
-
-/* =========================
-   XS: <= 320px (tiny phones)
-   ========================= */
-@media (max-width: 320px) {
-  html { font-size: 14px; }
-  .btn-base,
-  section#options > .btn-base { padding: .7rem 1.2rem; font-size: 1rem; }
-  .form-90s { width: 92vw; gap: 10px; }
-  .ctrl-90s { padding: .65rem .75rem; }
-  .select-90s { --arrow-zone: 48px; padding-right: 2.25rem; }
-  .logo { width: min(88vw, 480px); }
-  body.docked .logo { width: min(62vw, 380px); }
-  .options { gap: 10px; }
-}
-
-/* =========================
-   SM: 321–480px (phones)
-   ========================= */
-@media (min-width: 321px) and (max-width: 480px) {
-  html { font-size: 15px; }
-  .btn-base,
-  section#options > .btn-base { padding: .85rem 1.6rem; font-size: 1.05rem; }
-  .form-90s { width: 90vw; }
-  .ctrl-90s { padding: .75rem .9rem; }
-  .select-90s { --arrow-zone: 52px; padding-right: 2.6rem; }
-  .logo { width: min(86vw, 560px); }
-  body.docked .logo { width: min(58vw, 420px); }
-}
-
-/* =========================
-   MD: 481–600px (large phones / small phablets)
-   ========================= */
-@media (min-width: 481px) and (max-width: 600px) {
-  html { font-size: 16px; }
-  .btn-base,
-  section#options > .btn-base { padding: .95rem 1.9rem; font-size: 1.15rem; }
-  .form-90s { width: 88vw; }
-  .logo { width: min(84vw, 680px); }
-  body.docked .logo { width: min(52vw, 480px); }
-}
-
-/* =========================
-   LG: 601–768px (phablets / small tablets)
-   ========================= */
-@media (min-width: 601px) and (max-width: 768px) {
-  html { font-size: 17px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1rem 2rem; font-size: 1.2rem; }
-  .form-90s { width: min(520px, 86vw); }
-  .logo { width: min(78vw, 820px); }
-  body.docked .logo { width: min(48vw, 520px); }
-}
-
-/* =========================
-   TAB: 769–1024px (tablets)
-   ========================= */
-@media (min-width: 769px) and (max-width: 1024px) {
-  html { font-size: 18px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1.05rem 2.2rem; font-size: 1.25rem; }
-  .form-90s { width: min(560px, 80vw); }
-  .logo { width: min(70vw, 1000px); }
-  body.docked .logo { width: min(44vw, 560px); }
-  /* Show options in 2 columns when there’s room */
-  body.docked .options { grid-template-columns: repeat(2, minmax(200px, 1fr)); }
-}
-
-/* =========================
-   LAP: 1025–1280px (small laptops)
-   ========================= */
-@media (min-width: 1025px) and (max-width: 1280px) {
-  html { font-size: 18.5px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1.1rem 2.4rem; font-size: 1.3rem; }
-  .form-90s { width: min(620px, 70vw); }
-  .logo { width: min(64vw, 1100px); }
-  body.docked .logo { width: min(40vw, 600px); }
-  body.docked .options { grid-template-columns: repeat(2, minmax(220px, 1fr)); gap: 16px; }
-}
-
-/* =========================
-   DESK: 1281–1536px (desktops)
-   ========================= */
-@media (min-width: 1281px) and (max-width: 1536px) {
-  html { font-size: 19px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1.15rem 2.6rem; font-size: 1.35rem; }
-  .form-90s { width: min(720px, 62vw); }
-  body.docked .options { grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 18px;}
-}
-
-/* =========================
-   XL: 1537–1920px (large desktops / 1080p)
-   ========================= */
-@media (min-width: 1537px) and (max-width: 1920px) {
-  html { font-size: 19.5px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1.2rem 2.8rem; font-size: 1.4rem; }
-  .form-90s { width: min(820px, 56vw); }
-  body.docked .options { grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 20px; }
-}
-
-/* =========================
-   2K–4K: 1921px+
-   ========================= */
-@media (min-width: 1921px) {
-  html { font-size: 20px; }
-  .btn-base,
-  section#options > .btn-base { padding: 1.25rem 3rem; font-size: 1.5rem; }
-  .form-90s { width: min(960px, 48vw); }
-  body.docked .options { grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 22px; }
-}
-
-/* =========================
-   Orientation helpers
-   ========================= */
-@media (orientation: landscape) and (max-height: 580px) {
-  :root { --stage-padding-top: 16px; }
-  .logo { width: min(70vw, 800px); }
-  body.docked .logo { width: min(38vw, 540px); }
-  .form-90s { width: min(60vw, 680px); }
-}
-
-@media (orientation: portrait) {
-  .form-90s { width: min(90vw, 520px); }
-  body.docked .options { grid-template-columns: 1fr; }
-}
-/* ===== Lock everything to the *visible* viewport height ===== */
-:root { --vh: 100vh; }
-@supports (height: 100dvh) { :root { --vh: 100dvh; } }  /* modern, dynamic */
-@supports (height: 100svh) { :root { --vh: 100svh; } }  /* small viewport */
-
-/* Stage + overlay exactly fill the screen, no outer scroll */
-.stage {
-  min-height: var(--vh);
-  height: var(--vh);
-  box-sizing: border-box;
-  overflow-y: auto;      /* allow internal scroll if absolutely needed on tiny screens */
-  overflow-x: hidden;
-  padding-top: var(--stage-padding-top);
-  padding-left: max(12px, env(safe-area-inset-left));
-  padding-right: max(12px, env(safe-area-inset-right));
-  padding-bottom: max(12px, env(safe-area-inset-bottom));
-}
-.overlay {
-  height: var(--vh);
-}
-
-/* Keep the page itself locked; only .stage may scroll when necessary */
-html, body { height: var(--vh); overflow: hidden; }
-
-/* Constrain logo height so it can't push content off-screen */
-.logo {
-  max-height: min(60vh, 68svh);
-}
-body.docked .logo {
-  max-height: min(32vh, 40svh);  /* docked size cap in addition to your width cap */
-}
-
-/* Tighten spacing on small heights so nothing gets cut off */
-@media (max-height: 700px) {
-  :root { --stage-padding-top: 16px; }
-  .options { gap: 10px; margin-top: 16px; }
-  .form-90s { width: min(92vw, 520px); gap: 10px; }
-  .btn-base,
-  section#options > .btn-base { padding: .8rem 1.6rem; font-size: clamp(1rem, 3.6vw, 1.2rem); }
-  .ctrl-90s { padding: .7rem .85rem; }
-  .select-90s { --arrow-zone: 48px; padding-right: 2.25rem; }
-}
-
-@media (max-height: 560px) {
-  .logo { max-height: 50vh; }
-  body.docked .logo { max-height: 26vh; }
-  .options { gap: 8px; }
-  .btn-base,
-  section#options > .btn-base { padding: .7rem 1.2rem; font-size: clamp(.95rem, 3.4vw, 1.1rem); }
-  .form-90s { gap: 8px; }
-}
-
-/* Very small phones: keep everything inside the visible area */
-@media (max-width: 360px), (max-height: 480px) {
-  .logo { width: min(82vw, 520px); }
-  body.docked .logo { width: min(58vw, 380px); }
-  .options { gap: 8px; }
-  .form-90s { width: 94vw; }
-}
-
-/* Reduce motion users: remove bob/pulse so height never expands from animations */
-@media (prefers-reduced-motion: reduce) {
-  * { animation: none !important; transition: none !important; }
-  .logo { animation: none !important; }
-  .btn-base { animation: none !important; }
-}
-
-/* === 90s custom select popup — matches ctrl-90s look === */
-.select-90s-shell { position: relative; width: 100%; }
-
-.select-90s-hidden {
-  position: absolute !important; left: -9999px !important; width: 0 !important; height: 0 !important;
-  opacity: 0 !important; pointer-events: none !important; /* still submits in forms */
-}
-
-/* Button that shows current value */
-.select-90s-display {
-  cursor: pointer; user-select: none;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: .85rem 1rem; min-height: 48px;
-  color: var(--ui-light); text-shadow: 0 1px 0 rgba(0,0,0,.25);
-  border: 6px solid var(--ui-light);
-  border-top-color:#fff; border-left-color:#dfe8ec; border-right-color:#5c7a8a; border-bottom-color:#2b4654;
-  border-radius: 18px 22px 16px 24px / 18px 20px 22px 16px;
-  background:
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px);
-  background-size: 200% 200%, 200% 200%;
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 8px 0 #0a3442,
-    0 18px 28px rgba(0,0,0,.35);
-}
-
-/* caret */
-.select-90s-caret {
-  width: 18px; height: 18px; margin-left: .75rem; flex: 0 0 18px;
-  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24'><path fill='%23274a5a' d='M7 10l5 5 5-5z'/></svg>") center/contain no-repeat;
-  filter: drop-shadow(0 1px 0 rgba(255,255,255,.15));
-}
-
-/* Popup menu */
-.select-90s-menu {
-  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 30;
-  border: 6px solid var(--ui-light);
-  border-top-color:#fff; border-left-color:#dfe8ec; border-right-color:#5c7a8a; border-bottom-color:#2b4654;
-  border-radius: 18px;
-  background:
-    linear-gradient(135deg, var(--ui-gloss1), var(--ui-gloss2)),
-    repeating-linear-gradient(135deg, rgba(255,255,255,.10) 0 6px, rgba(0,0,0,.10) 6px 12px);
-  background-size: 200% 200%, 200% 200%;
-  box-shadow:
-    inset 0 0 0 2px #ffffff20,
-    0 10px 22px rgba(0,0,0,.45);
-  max-height: min(40vh, 320px); overflow: auto; display: none;
-}
-
-/* Open state */
-.select-90s-shell.is-open .select-90s-menu { display: block; }
-
-/* Items */
-.select-90s-item {
-  list-style: none; margin: 0; padding: .75rem 1rem; color: var(--ui-light);
-  display: flex; align-items: center; min-height: 40px;
-}
-.select-90s-item:hover,
-.select-90s-item[aria-selected="true"] {
-  background: linear-gradient(135deg, #3baadd, #27576d);
-}
-.select-90s-item[aria-disabled="true"] {
-  opacity: .45; pointer-events: none;
-}
-
-/* Keyboard focus ring inside custom menu */
-.select-90s-item:focus-visible { outline: 4px dotted #00e5ff; outline-offset: -2px; }
-
-/* Keep within viewport on tiny screens */
-@media (max-height: 560px) {
-  .select-90s-menu { max-height: 50vh; }
-}
+/* Keep modal button spacing readable */
+.modal-actions button { margin-left:8px; }

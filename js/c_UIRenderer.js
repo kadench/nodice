@@ -87,9 +87,20 @@ export default class c_UIRenderer {
     _applyDiceEnabledMask(selectableMask) {
         const diceClicks = this._getDiceImg();
         for (let i = 0; i < diceClicks.length && i < selectableMask.length; i++) {
+            diceClicks[i].classList.toggle('disabled', !selectableMask[i]); 
             diceClicks[i].firstElementChild.classList.toggle('disabled', !selectableMask[i]); 
+            diceClicks[i].lastElementChild.classList.toggle('disabled', !selectableMask[i]); 
         }
     }
+
+    _onFarkle() {
+    // Disable roll immediately when Farkle occurs
+    if (this.rollBtn) this.rollBtn.disabled = true;
+
+    // Optional: give user feedback
+    const msg = document.querySelector("#message");
+    if (msg) msg.textContent = "Farkle! You must end your turn.";
+}
 
     _setScoreDisplay(currentRollScore, runScore, totalScore) {
         if (this.containerScore) this.containerScore.textContent = String(currentRollScore);
@@ -148,5 +159,12 @@ export default class c_UIRenderer {
             box.classList.remove("visible");
             box.classList.add("hidden");
         }
+    }
+
+    // Add: visual farkle toggle — applies/removes .farkle on the dice container
+    _setFarkleVisual(on = false) {
+        if (!this.containerDice) return;
+        if (on) this.containerDice.classList.add("farkle");
+        else this.containerDice.classList.remove("farkle");
     }
 }

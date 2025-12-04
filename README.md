@@ -2,7 +2,7 @@
 **The classic high-stakes dice game, rebuilt for the browser with a twist of Chaos.**
 
 [![Status: In Development](https://img.shields.io/badge/Status-In%20Development-blue)](https://github.com/your-username/farkle-web)
-[![Target Release](https://img.shields.io/badge/Target%20Release-Dec%2013th%2C%202024-red)](https://github.com/your-username/farkle-web)
+[![Target Release](https://img.shields.io/badge/Target%20Release-Nov%2029th%2C%202025-red)](https://github.com/your-username/farkle-web)
 [![Tech Stack](https://img.shields.io/badge/Tech-HTML%20%7C%20CSS%20%7C%20JS-orange)](https://github.com/your-username/farkle-web)
 
 ---

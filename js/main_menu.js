@@ -1,176 +1,221 @@
-//SLight Breeze by Kaden Hansen
-//License: All Rights Reserved ©
+document.addEventListener("DOMContentLoaded", () => {
+  const startBtn = document.getElementById('start-game');
+  const optionsBtn = document.getElementById('options-btn');
 
-//Paperback by Bensound.com
-//License code: WDELTECG6IBXAHH1
-//Artist: : Diffie Bosman
+  const modal = document.getElementById('options-modal');
+  const modalBackdrop = modal ? modal.querySelector('.modal-backdrop') : null;
+  const playerInput = document.getElementById('player-count');
 
+  // Ensure modal is hidden by default (fix "open by default" bug)
+  if (modal) modal.hidden = true;
 
-// === Audio setup === NOT WRITTEN YET
-const entrance = new Audio("assets/audio/music/slight_breeze.wav");
+  const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+  const panels = Array.from(document.querySelectorAll('.options-panel'));
+  const saveDiceBtn = document.getElementById('save-dice-scores');
+  const resetDiceBtn = document.getElementById('reset-dice-scores');
+  const closeOptionsBottom = document.getElementById('close-options-bottom');
 
-// Menu music playlist
-const playlist = [
-  { src: "assets/audio/music/paperback.mp3" },
-  // { src: "assets/another_song.mp3" },
-];
-let currentTrack = 0;
-const player = new Audio();
-player.preload = "auto";
-player.loop = (playlist.length === 1); // paperback loops if it's the only track
+  const DEFAULT_DICE_SCORES = {
+    one_5: 50, one_1: 100,
+    three_1: 1000, three_2: 200, three_3: 300, three_4: 400, three_5: 500, three_6: 600,
+    four_any: 1000, five_any: 2000, six_any: 3000,
+    straight: 1500, two_triplets: 2500, four_any_w_pair: 2500,
+    first_run_min: 300
+  };
 
-// Keep looping/advancing
-player.addEventListener("ended", () => {
-  if (playlist.length > 1) {
-    currentTrack = (currentTrack + 1) % playlist.length;
-    player.src = playlist[currentTrack].src;
-    player.play().catch(err => console.warn("playlist play failed:", err));
-  } else {
-    // Safety loop for single-track case
-    player.currentTime = 0;
-    player.play().catch(err => console.warn("paperback replay failed:", err));
+  const STORAGE_KEY = "nodice_custom_opts";
+
+  function loadSavedOptions() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   }
-});
 
-function startPlaylist() {
-  if (!playlist.length) return;
-  player.src = playlist[currentTrack].src;
-  player.currentTime = 0;
-  player.play().catch(err => console.warn("playlist play failed:", err));
-}
-
-// === Consent flag (persistent) ===
-const AUDIO_FLAG = "audioConsent";
-const hasAudioConsent = () => localStorage.getItem(AUDIO_FLAG) === "true";
-const setAudioConsent = () => { try { localStorage.setItem(AUDIO_FLAG, "true"); } catch {} };
-
-// === DOM ===
-const overlay = document.getElementById("start-overlay");
-const beginBtn = document.getElementById("begin");
-const logo = document.getElementById("logo");
-const stage = document.getElementById("stage");
-
-let started = false;
-let entranceStarted = false;
-
-/** Fade the logo in */
-function fadeInLogo() {
-  logo.classList.remove("is-hidden", "instant");
-  void logo.offsetWidth;
-  logo.classList.add("fade-in");
-}
-
-/** Instantly show logo */
-function showLogoInstant() {
-  logo.classList.remove("is-hidden", "fade-in");
-  logo.classList.add("instant");
-}
-
-/** After fade completes, dock then reveal rest */
-logo.addEventListener("transitionend", (e) => {
-  if (e.propertyName === "opacity") {
-    document.body.classList.add("docked");
-    setTimeout(() => document.body.classList.add("ready"), 300); // after bounce
+  function saveOptions(obj) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    } catch {}
   }
-}, { passive: true });
 
-function hideOverlay() { overlay.classList.add("hidden"); }
-function showOverlay() { overlay.classList.remove("hidden"); }
+  function populateDiceFormFrom(obj) {
+    const form = document.getElementById('dice-scores-form');
+    if (!form) return;
+    const data = Object.assign({}, DEFAULT_DICE_SCORES, obj?.diceScores || {});
+    for (const k of Object.keys(DEFAULT_DICE_SCORES)) {
+      const el = form.querySelector(`[name="${k}"]`);
+      if (el) el.value = String(data[k] ?? DEFAULT_DICE_SCORES[k]);
+    }
+  }
 
-/** Skip intro entirely */
-function skipToMenu() {
-  try {
-    entrance.pause();
-    if (!isNaN(entrance.duration)) entrance.currentTime = entrance.duration;
-  } catch {}
+  function readDiceFormValues() {
+    const form = document.getElementById('dice-scores-form');
+    if (!form) return null;
+    const out = {};
+    for (const k of Object.keys(DEFAULT_DICE_SCORES)) {
+      const el = form.querySelector(`[name="${k}"]`);
+      const v = el ? parseInt(el.value, 10) : DEFAULT_DICE_SCORES[k];
+      out[k] = Number.isFinite(v) ? v : DEFAULT_DICE_SCORES[k];
+    }
+    return out;
+  }
 
-  showLogoInstant();
-  document.body.classList.add("docked", "ready");
+  function formDiffersFromDefaults() {
+    const vals = readDiceFormValues();
+    if (!vals) return false;
+    for (const k of Object.keys(DEFAULT_DICE_SCORES)) {
+      if ((vals[k] ?? DEFAULT_DICE_SCORES[k]) !== DEFAULT_DICE_SCORES[k]) return true;
+    }
+    return false;
+  }
 
-  setAudioConsent();        // gesture happened → persist consent
-  startPlaylist();
-
-  hideOverlay();
-  started = true;
-  entranceStarted = false;
-}
-
-/** Normal flow: Play -> entrance -> playlist */
-function startNormal() {
-  if (started) return;
-  started = true;
-
-  setAudioConsent();  // pressing Play grants/persists consent
-  fadeInLogo();
-
-  entrance.play()
-    .then(() => {
-      entranceStarted = true;
-      entrance.addEventListener("ended", () => {
-        startPlaylist();
-      }, { once: true });
-      hideOverlay();
-    })
-    .catch(err => {
-      console.warn("Autoplay blocked; waiting for gesture:", err);
-      started = false;
-      showOverlay();
+  function applyActiveTabState() {
+    const activeBtn = tabButtons.find(b => b.classList.contains('active')) || tabButtons[0];
+    if (!activeBtn) return;
+    tabButtons.forEach(b => {
+      const isActive = b === activeBtn;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? "true" : "false");
     });
-}
-
-/** Legacy alias */
-function skipIntro() { skipToMenu(); }
-
-/* Overlay clicks */
-overlay.addEventListener("click", (e) => {
-  const target = e.target;
-  if (target && target.id === "begin") {
-    startNormal();
-  } else {
-    skipToMenu();
+    const target = activeBtn.dataset.tab;
+    panels.forEach(p => {
+      const pid = p.id || "";
+      const match = pid === target || pid === `${target}-panel`;
+      p.hidden = !match;
+    });
   }
-}, { capture: true });
 
-/* Keyboard (while overlay visible) */
-document.addEventListener("keydown", (e) => {
-  if (overlay && !overlay.classList.contains("hidden")) {
-    const k = e.key;
-    if (k === "Escape" || (typeof k === "string" && k.toLowerCase() === "s")) {
+  let lastFocused = null;
+  if (optionsBtn && modal) {
+    optionsBtn.addEventListener('click', () => {
+      lastFocused = document.activeElement;
+      modal.hidden = false;
+      document.body.classList.add('modal-open');
+      const saved = loadSavedOptions();
+      populateDiceFormFrom(saved);
+      applyActiveTabState();
+      const focusTarget = modal.querySelector('#save-dice-scores') || modal.querySelector('button');
+      if (focusTarget) focusTarget.focus();
+    });
+  }
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => {
+        const isActive = b === btn;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', isActive ? "true" : "false");
+      });
+
+      const target = btn.dataset.tab;
+      panels.forEach(p => {
+        const pid = p.id || "";
+        const match = pid === target || pid === `${target}-panel`;
+        p.hidden = !match;
+      });
+    });
+  });
+
+  function closeModal() {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove('modal-open');
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  // wire close buttons & backdrop correctly (fix missing listeners)
+  const closeOptionsTop = document.getElementById('close-options');
+  if (closeOptionsTop) closeOptionsTop.addEventListener('click', closeModal);
+  if (closeOptionsBottom) closeOptionsBottom.addEventListener('click', closeModal);
+  if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
+
+  // Save dice scores handler – ONLY mark useCustom if values differ from defaults
+  if (saveDiceBtn) {
+    saveDiceBtn.addEventListener('click', () => {
+      const vals = readDiceFormValues();
+      if (!vals) return;
+
+      let changed = false;
+      for (const k of Object.keys(DEFAULT_DICE_SCORES)) {
+        if ((vals[k] ?? DEFAULT_DICE_SCORES[k]) !== DEFAULT_DICE_SCORES[k]) {
+          changed = true;
+          break;
+        }
+      }
+
+      try {
+        if (changed) {
+          saveOptions({ diceScores: vals, useCustom: true, savedAt: Date.now() });
+        } else {
+          // exactly defaults -> remove any custom flag
+          localStorage.removeItem(STORAGE_KEY);
+        }
+      } catch {}
+
+      closeModal();
+    });
+  }
+
+  // Reset → force defaults and clear any saved custom options
+  if (resetDiceBtn) {
+    resetDiceBtn.addEventListener('click', () => {
+      populateDiceFormFrom({ diceScores: DEFAULT_DICE_SCORES });
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    });
+  }
+
+  // Start button: ONLY launch custom if options actually differ from defaults
+  if (startBtn && playerInput) {
+    startBtn.addEventListener('click', () => {
+      let n = parseInt(playerInput.value, 10);
+      if (!Number.isFinite(n) || n < 1) n = 1;
+      if (n > 16) n = 16;
+
+      const saved = loadSavedOptions();
+      const savedDiffers = !!saved && !!saved.diceScores && Object.keys(DEFAULT_DICE_SCORES).some(
+        k => (saved.diceScores[k] ?? DEFAULT_DICE_SCORES[k]) !== DEFAULT_DICE_SCORES[k]
+      );
+
+      // Also detect unsaved edits in the open modal (if user changed then clicked Start directly)
+      const liveDiffers = formDiffersFromDefaults();
+
+      const useCustom = savedDiffers || liveDiffers;
+      window.location.href = `game.html?players=${n}&custom=${useCustom ? "1" : "0"}`;
+    });
+  }
+
+  if (modal) {
+    modal.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal();
+        return;
+      }
+      if (e.key === 'Tab') {
+        const focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        } else if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        }
+      }
+    });
+  }
+
+  const form = document.getElementById('menu-form');
+  if (form && startBtn) {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
-      skipToMenu();
-    }
+      startBtn.click();
+    });
   }
-});
 
-/* Play via Enter/Space on the button */
-beginBtn.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" || e.key === " ") {
-    e.preventDefault();
-    startNormal();
-  }
-});
-
-/* Pause/resume with tab visibility; resume only if consent persisted */
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    entrance.pause();
-    player.pause();
-  } else if (started && hasAudioConsent()) {
-    if (entranceStarted && !entrance.ended) {
-      entrance.play().catch(() => {});
-    } else {
-      player.play().catch(() => {});
-    }
-  }
-});
-
-/* Initial overlay (no intro/menu persistence) */
-window.addEventListener("DOMContentLoaded", () => {
-  overlay.classList.remove("hidden");
-});
-
-/* Cleanup */
-window.addEventListener("beforeunload", () => {
-  entrance.pause();
-  player.pause();
+  applyActiveTabState();
 });

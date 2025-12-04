@@ -15,7 +15,7 @@ export default class c_DiceRunGame {
         this.selectionManager = new c_SelectionManager();
         this.players = new c_PlayerHandler();
 
-        this.latestDiceValues = [1, 1, 1, 1, 1, 1];
+        this.latestDiceValues = [1, 2, 4, 1, 1, 1]; // initial dummy values for custom only
         this.selectedDiceMask = [false, false, false, false, false, false];
         this.bankedDiceMask = [false, false, false, false, false, false];
         this.currentRollScore = 0;

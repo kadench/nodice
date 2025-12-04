@@ -1,43 +1,87 @@
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>NoDice | Menu</title>
-    <link rel="icon" type="image/x-icon" href="assets/dicedn.png"/>
-    <link rel="stylesheet" href="css/main_menu.css">
-    <script src="js/main_menu.js" defer></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>NoDice — Main Menu</title>
+  <link rel="stylesheet" href="./css/main_menu.css">
 </head>
 <body>
-    <!-- Fullscreen overlay shown first with Play button -->
-    <div id="start-overlay" class="overlay">
-        <button id="begin" class="btn-base" aria-label="Play / Begin">Play</button>
+  <main id="main-menu" aria-labelledby="menu-title">
+    <h1 id="menu-title">NoDice</h1>
+
+    <form id="menu-form" aria-describedby="menu-desc">
+      <p id="menu-desc">Configure players then start the game.</p>
+
+      <label for="player-count">Player count</label>
+      <input id="player-count" name="player-count" type="number" min="1" max="16" value="4" />
+
+      <div class="controls">
+        <button type="button" id="start-game">Start Game</button>
+        <button type="button" id="options-btn">Options</button>
+      </div>
+    </form>
+
+    <!-- Modal: Options (hidden by default) -->
+    <div id="options-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="options-title" hidden>
+      <div class="modal-backdrop" data-dismiss="modal" tabindex="-1"></div>
+      <div class="modal-dialog" role="document" aria-describedby="options-desc">
+        <h2 id="options-title">Options</h2>
+
+        <!-- Tabs -->
+        <nav class="options-tabs" role="tablist" aria-label="Options Tabs">
+          <button type="button" class="tab-btn active" data-tab="dice-scores" role="tab" aria-selected="true">Dice Scores</button>
+          <button type="button" class="tab-btn" data-tab="placeholder" role="tab" aria-selected="false">Other</button>
+        </nav>
+
+        <div id="options-desc" class="modal-body">
+          <!-- Dice Scores panel -->
+          <section id="dice-scores-panel" class="options-panel" role="tabpanel">
+            <form id="dice-scores-form">
+              <p>Adjust scoring values used by the custom dice run game.</p>
+
+              <div class="field-row"><label for="one_5">Single 5</label><input id="one_5" name="one_5" type="number" min="0" step="10" value="50"></div>
+              <div class="field-row"><label for="one_1">Single 1</label><input id="one_1" name="one_1" type="number" min="0" step="10" value="100"></div>
+
+              <fieldset>
+                <legend>Three of a kind</legend>
+                <div class="field-row"><label for="three_1">Three 1s</label><input id="three_1" name="three_1" type="number" min="0" step="50" value="1000"></div>
+                <div class="field-row"><label for="three_2">Three 2s</label><input id="three_2" name="three_2" type="number" min="0" step="50" value="200"></div>
+                <div class="field-row"><label for="three_3">Three 3s</label><input id="three_3" name="three_3" type="number" min="0" step="50" value="300"></div>
+                <div class="field-row"><label for="three_4">Three 4s</label><input id="three_4" name="three_4" type="number" min="0" step="50" value="400"></div>
+                <div class="field-row"><label for="three_5">Three 5s</label><input id="three_5" name="three_5" type="number" min="0" step="50" value="500"></div>
+                <div class="field-row"><label for="three_6">Three 6s</label><input id="three_6" name="three_6" type="number" min="0" step="50" value="600"></div>
+              </fieldset>
+
+              <div class="field-row"><label for="four_any">Four of a kind</label><input id="four_any" name="four_any" type="number" min="0" step="50" value="1000"></div>
+              <div class="field-row"><label for="five_any">Five of a kind</label><input id="five_any" name="five_any" type="number" min="0" step="50" value="2000"></div>
+              <div class="field-row"><label for="six_any">Six of a kind</label><input id="six_any" name="six_any" type="number" min="0" step="50" value="3000"></div>
+              <div class="field-row"><label for="straight">Straight (1-6)</label><input id="straight" name="straight" type="number" min="0" step="50" value="1500"></div>
+              <div class="field-row"><label for="two_triplets">Two triplets</label><input id="two_triplets" name="two_triplets" type="number" min="0" step="50" value="2500"></div>
+              <div class="field-row"><label for="four_any_w_pair">Four + pair</label><input id="four_any_w_pair" name="four_any_w_pair" type="number" min="0" step="50" value="2500"></div>
+
+              <div class="field-row"><label for="first_run_min">First run minimum</label><input id="first_run_min" name="first_run_min" type="number" min="0" step="50" value="300"></div>
+
+              <div class="modal-actions">
+                <button type="button" id="reset-dice-scores">Reset Defaults</button>
+                <button type="button" id="save-dice-scores">Save</button>
+              </div>
+            </form>
+          </section>
+
+          <!-- Placeholder panel -->
+          <section id="placeholder" class="options-panel" role="tabpanel" hidden>
+            <p>Other options will go here.</p>
+          </section>
+        </div>
+
+        <div class="modal-actions" style="margin-top:10px;">
+          <button id="close-options-bottom" type="button">Close</button>
+        </div>
+      </div>
     </div>
+  </main>
 
-    <main id="stage" class="stage">
-        <!-- Placeholder logo image. Replace with your actual SVG/PNG -->
-        <img id="logo" class="logo is-hidden" src="https://placecats.com/1000/1000" alt="NO DICE Logo">
-
-        <!-- Options area (appears when logo is docked) -->
-        <section id="options" class="options" aria-label="Options">
-        <a href="game.html"><button class="btn-base">New Game aaaa</button></a>
-        <button class="btn-base">How to Play</button>
-        <button class="btn-base">Quit</button>
-        </section>
-    <form class="form-90s" action="#" method="get">
-    <label for="mode">Game Mode</label>
-    <select id="mode" name="mode" class="ctrl-90s select-90s">
-        <option value="story">Story Mode</option>
-        <option value="arcade">Arcade</option>
-        <option value="time">Time Attack</option>
-        <option value="custom">Custom</option>
-    </select>
-
-    <label for="lives">Starting Lives</label>
-    <input id="lives" name="lives" type="number" inputmode="numeric" min="0" max="99" step="1" value="3" class="ctrl-90s number-90s" />
-
-  <button type="submit" class="btn-base">Apply</button>
-</form>
-
-    </main>
+  <script src="./js/main_menu.js" defer></script>
 </body>
 </html>
